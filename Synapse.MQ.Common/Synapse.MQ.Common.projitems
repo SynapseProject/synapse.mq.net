@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>7435254f-54f8-4090-947a-03eed4e1d7d1</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Synapse.MQ.Common</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Classes\SynapseMessage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\XmlUtils.cs" />
+  </ItemGroup>
+</Project>

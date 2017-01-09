@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Synapse.MQ.Tester", "Synapse.MQ.Tester\Synapse.MQ.Tester.csproj", "{0EB1568C-22DD-4103-A4AB-CCBBC07F2ACD}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Synapse.MQ.Common", "Synapse.MQ.Common\Synapse.MQ.Common.shproj", "{7435254F-54F8-4090-947A-03EED4E1D7D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Synapse.MQ.ZeroMQ", "Synapse.MQ.ZeroMQ\Synapse.MQ.ZeroMQ.csproj", "{E04B4417-C77B-4A29-9FE2-2418D0B870D5}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Synapse.MQ.Common\Synapse.MQ.Common.projitems*{e04b4417-c77b-4a29-9fe2-2418d0b870d5}*SharedItemsImports = 4
+		Synapse.MQ.Common\Synapse.MQ.Common.projitems*{7435254f-54f8-4090-947a-03eed4e1d7d1}*SharedItemsImports = 13
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EB1568C-22DD-4103-A4AB-CCBBC07F2ACD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EB1568C-22DD-4103-A4AB-CCBBC07F2ACD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EB1568C-22DD-4103-A4AB-CCBBC07F2ACD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EB1568C-22DD-4103-A4AB-CCBBC07F2ACD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E04B4417-C77B-4A29-9FE2-2418D0B870D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E04B4417-C77B-4A29-9FE2-2418D0B870D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E04B4417-C77B-4A29-9FE2-2418D0B870D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E04B4417-C77B-4A29-9FE2-2418D0B870D5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
