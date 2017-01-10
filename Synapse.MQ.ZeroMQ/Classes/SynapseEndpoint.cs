@@ -62,7 +62,7 @@ namespace Synapse.MQ.ZeroMQ
                     outgoing.Add(new ZFrame(Encoding.UTF8.GetBytes(identity)));
 
                 message.SentDate = DateTime.Now;
-                outgoing.Add(new ZFrame(message.ToString()));
+                outgoing.Add(new ZFrame(message.ToXml()));
                 Console.WriteLine("<<< [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
                 if (!Socket.Send(outgoing, out error))
                 {
@@ -98,7 +98,7 @@ namespace Synapse.MQ.ZeroMQ
                     String xml = request[2].ReadString();
 
                     //TODO : Build Me
-                    SynapseMessage message = SynapseMessage.FromString(xml);
+                    SynapseMessage message = SynapseMessage.FromXml(xml);
                     message.ReceivedDate = DateTime.Now;
 
                     //TODO : Debug - Remove Me
@@ -148,7 +148,7 @@ namespace Synapse.MQ.ZeroMQ
                 {
                     String xml = incoming[0].ReadString();
 
-                    SynapseMessage message = SynapseMessage.FromString(xml);
+                    SynapseMessage message = SynapseMessage.FromXml(xml);
 
                     Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 

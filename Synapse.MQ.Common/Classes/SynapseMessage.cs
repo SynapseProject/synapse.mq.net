@@ -37,12 +37,12 @@ namespace Synapse.MQ
             CreationDate = DateTime.Now;
         }
 
-        public override string ToString()
+        public string ToXml()
         {
             return XmlUtils.Serialize<SynapseMessage>(this, true);
         }
 
-        public static SynapseMessage FromString(String xml)
+        public static SynapseMessage FromXml(String xml)
         {
             return XmlUtils.Deserialize<SynapseMessage>(xml);
         }
