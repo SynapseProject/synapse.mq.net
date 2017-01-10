@@ -22,21 +22,20 @@ namespace Synapse.MQ.ZeroMQ
 
         public SynapseController()
         {
-            Outbound = new SynapseEndpoint(OutboundUrl);
+            Outbound = new SynapseEndpoint("Controller", OutboundUrl);
             Outbound.Connect();
 
-            Inbound = new SynapseEndpoint(InboundUrl);
+            Inbound = new SynapseEndpoint("Controller", InboundUrl);
             Inbound.Connect();
 
-            requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound));
+            requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, true, Outbound));
             requestPoller.Start();
-            replyPoller = new Thread(() => Inbound.ReceiveReplies(ProcessReplies));
+            replyPoller = new Thread(() => Inbound.ReceiveReplies(ProcessReplies, true, Outbound));
             replyPoller.Start();
         }
 
         private SynapseMessage ProcessInbound(SynapseMessage message, SynapseEndpoint replyOn)
         {
-            Console.WriteLine("*** SystemController : ProcessInbound Message Received");
             switch (message.Type)
             {
                 case MessageType.PLANSTATUS_REQUEST:
@@ -57,31 +56,41 @@ namespace Synapse.MQ.ZeroMQ
 
         private String ProcessReplies(SynapseMessage message)
         {
-            switch (message.Type)
+/*            switch (message.Type)
             {
                 default:
                     throw new Exception("Unknown MessageType [" + message.Type + "] Received.");
             }
 
-            return null;
+*/            return null;
         }
 
         public void ProcessAcks(SynapseMessage message)
         {
-            Console.WriteLine("*** SynapseController : ProcessAcks ***");
-            Console.WriteLine("*** [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+//            Console.WriteLine("*** SynapseController : ProcessAcks ***");
+//            Console.WriteLine(message);
+//            Console.WriteLine("************************************************");
         }
 
         public void ProcessPlanStatusRequest(SynapseMessage message)
         {
-            Console.WriteLine("*** SynapseController : ProcessPlanStatusRequest ***");
-            Console.WriteLine("*** [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+//            Console.WriteLine("*** SynapseController : ProcessPlanStatusRequest ***");
+//            Console.WriteLine(message);
+//            Console.WriteLine("************************************************");
+
+            SynapseMessage reply = new SynapseMessage();
+            reply.Type = MessageType.PLANSTATUS_REPLY;
+            reply.Body = "Plan Status : In Progress";
+            reply.SequenceNumber = 4;
+            reply.TrackingId = "0003";
+            Outbound.SendMessage(reply);
         }
 
         public void ProcessStatusUpdateRequest(SynapseMessage message)
         {
-            Console.WriteLine("*** SynapseController : ProcessStatusUpdateRequest ***");
-            Console.WriteLine("*** [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+//            Console.WriteLine("*** SynapseController : ProcessStatusUpdateRequest ***");
+//            Console.WriteLine(message);
+//            Console.WriteLine("************************************************");
         }
 
         public Guid SendExecutePlanRequest(SynapseMessage message)

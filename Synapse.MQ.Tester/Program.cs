@@ -14,12 +14,6 @@ namespace Synapse.MQ.Tester
     {
         static void Main(string[] args)
         {
-            SynapseMessage message = new SynapseMessage();
-            message.Type = MessageType.EXECUTE;
-            message.Body = "Test Message";
-            message.SequenceNumber = 1;
-            message.TrackingId = "0001";
-
             SynapseProxy controllerProxy = new SynapseProxy(@"tcp://*:5555", @"tcp://*:5556");
             Thread cProxyThread = new Thread(() => controllerProxy.Start());
             cProxyThread.Start();
@@ -31,25 +25,30 @@ namespace Synapse.MQ.Tester
             SynapseNode node = new SynapseNode();
 
             SynapseController controller = new SynapseController();
+
+            SynapseMessage message = new SynapseMessage();
+            message.Type = MessageType.EXECUTE;
+            message.Body = "Test Message";
+            message.SequenceNumber = 1;
+            message.TrackingId = "0001";
             controller.SendExecutePlanRequest(message);
+
+            message = new SynapseMessage();
+            message.Type = MessageType.STATUS;
+            message.Body = "Status Update : Completed";
+            message.SequenceNumber = 2;
+            message.TrackingId = "0001";
+            node.SendStatusUpdateRequest(message);
+
+            message = new SynapseMessage();
+            message.Type = MessageType.PLANSTATUS_REQUEST;
+            message.Body = "Need Status For Plan";
+            message.SequenceNumber = 3;
+            message.TrackingId = "0003";
+            node.SendPlanStatusRequest(message);
 
             while (true) { Thread.Sleep(500); }
 
         }
-
-        public static SynapseMessage processRequest(SynapseMessage message, SynapseEndpoint replyTo)
-        {
-            Console.WriteLine("*** Processing Request ***");
-            Console.WriteLine("*** [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
-
-            SynapseMessage reply = new SynapseMessage();
-            reply.TrackingId = message.TrackingId;
-            reply.Body = message.Body.ToUpper();
-            reply.SequenceNumber = message.SequenceNumber + 1;
-
-            return reply;
-        }
-
-
     }
 }

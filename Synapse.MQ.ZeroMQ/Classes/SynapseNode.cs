@@ -20,14 +20,14 @@ namespace Synapse.MQ.ZeroMQ
 
         public SynapseNode()
         {
-            Outbound = new SynapseEndpoint(OutboundUrl);
+            Outbound = new SynapseEndpoint("Node", OutboundUrl);
             Outbound.Connect();
 
-            Inbound = new SynapseEndpoint(InboundUrl);
+            Inbound = new SynapseEndpoint("Node", InboundUrl);
             Inbound.Connect();
-            requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound));
+            requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, true, Outbound));
             requestPoller.Start();
-            replyPoller = new Thread(() => Inbound.ReceiveReplies(ProcessReplies));
+            replyPoller = new Thread(() => Inbound.ReceiveReplies(ProcessReplies, true, Outbound));
             replyPoller.Start();
             
         }
@@ -69,20 +69,23 @@ namespace Synapse.MQ.ZeroMQ
 
         public void ProcessExecutePlanRequest(SynapseMessage message)
         {
-            Console.WriteLine("*** SynapseNode : ProcessExecutePlanRequests ***");
-            Console.WriteLine("*** [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+//            Console.WriteLine("*** SynapseNode : ProcessExecutePlanRequests ***");
+//            Console.WriteLine(message);
+//            Console.WriteLine("************************************************");
         }
 
         public void ProcessAcks(SynapseMessage message)
         {
-            Console.WriteLine("*** SynapseNode : ProcessAcks ***");
-            Console.WriteLine("*** [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+//            Console.WriteLine("*** SynapseNode : ProcessAcks ***");
+//            Console.WriteLine(message);
+//            Console.WriteLine("************************************************");
         }
 
         public void ProcessPlanStatusReply(SynapseMessage message)
         {
-            Console.WriteLine("*** SynapseNode : ProcessPlanStatusReply ***");
-            Console.WriteLine("*** [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+//            Console.WriteLine("*** SynapseNode : ProcessPlanStatusReply ***");
+//            Console.WriteLine(message);
+//            Console.WriteLine("************************************************");
         }
 
         public Guid SendPlanStatusRequest(SynapseMessage message)

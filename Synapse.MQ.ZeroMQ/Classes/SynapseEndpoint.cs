@@ -11,13 +11,15 @@ namespace Synapse.MQ.ZeroMQ
 {
     public class SynapseEndpoint
     {
+        public String Name { get; set; }
         public ZContext Context { get; }
         public ZSocket Socket { get; }
         public ZSocketType SocketType { get; }
         public String Endpoint { get; }
 
-        public SynapseEndpoint(String endpoint, ZContext context = null, ZSocketType socketType = ZSocketType.DEALER)
+        public SynapseEndpoint(String name, String endpoint, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
         {
+            Name = name;
             Endpoint = endpoint;
             Context = context;
             SocketType = socketType;
@@ -49,17 +51,19 @@ namespace Synapse.MQ.ZeroMQ
         }
 
 
-        public void SendMessage(SynapseMessage message)
+        public void SendMessage(SynapseMessage message, String identity = null)
         {
             ZError error;
             using (ZMessage outgoing = new ZMessage())
             {
-                if (message.ReplyTo == null)
+                if (String.IsNullOrWhiteSpace(identity))
                     outgoing.Add(new ZFrame(Socket.Identity));
                 else
-                    outgoing.Add(new ZFrame(Encoding.UTF8.GetBytes(message.ReplyTo)));
+                    outgoing.Add(new ZFrame(Encoding.UTF8.GetBytes(identity)));
+
+                message.SentDate = DateTime.Now;
                 outgoing.Add(new ZFrame(message.ToString()));
-                Console.WriteLine("<<< [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+                Console.WriteLine("<<< [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
                 if (!Socket.Send(outgoing, out error))
                 {
                     if (error == ZError.ETERM)
@@ -70,7 +74,7 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        public void ReceiveMessages(Func<SynapseMessage, SynapseEndpoint, SynapseMessage> callback, Boolean sendAck = true, SynapseEndpoint replyOn = null)
+        public void ReceiveMessages(Func<SynapseMessage, SynapseEndpoint, SynapseMessage> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage request;
@@ -95,12 +99,12 @@ namespace Synapse.MQ.ZeroMQ
 
                     //TODO : Build Me
                     SynapseMessage message = SynapseMessage.FromString(xml);
+                    message.ReceivedDate = DateTime.Now;
 
                     //TODO : Debug - Remove Me
-                    Console.WriteLine(">>> [" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+                    Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 
-                    //TODO : Build Ack Message
-                    if (sendAck)
+                    if (sendAck && message.Type != MessageType.ACK)
                     {
                         replyUsing.SendMessage(SynapseMessage.GetAck(message));
                     }
@@ -117,11 +121,15 @@ namespace Synapse.MQ.ZeroMQ
 
 
 
-        public void ReceiveReplies(Func<SynapseMessage, String> callback)
+        public void ReceiveReplies(Func<SynapseMessage, String> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage incoming;
             ZPollItem poll = ZPollItem.CreateReceiver();
+            SynapseEndpoint replyUsing = this;
+
+            if (replyOn != null)
+                replyUsing = replyOn;
 
             while (true)
             {
@@ -141,6 +149,13 @@ namespace Synapse.MQ.ZeroMQ
                     String xml = incoming[0].ReadString();
 
                     SynapseMessage message = SynapseMessage.FromString(xml);
+
+                    Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+
+                    if (sendAck && message.Type != MessageType.ACK)
+                    {
+                        replyUsing.SendMessage(SynapseMessage.GetAck(message));
+                    }
 
                     if (callback != null)
                         callback(message);

@@ -19,8 +19,8 @@ namespace Synapse.MQ.ZeroMQ
             if (ctx == null)
                 ctx = new ZContext();
 
-            Listener = new SynapseEndpoint(listenOn, ctx, ZSocketType.ROUTER);
-            Sender = new SynapseEndpoint(sendOn, ctx, ZSocketType.DEALER);
+            Listener = new SynapseEndpoint("ProxyListener", listenOn, ZSocketType.ROUTER, ctx);
+            Sender = new SynapseEndpoint("ProxySender", sendOn, ZSocketType.DEALER, ctx);
         }
 
         public void Start()

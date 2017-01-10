@@ -31,13 +31,6 @@ namespace Synapse.MQ
         [XmlElement]
         public DateTime ReceivedDate { get; set; }
 
-        [XmlElement]
-        public String SentFrom { get; set; }
-        [XmlElement]
-        public String ReplyTo { get; set; }
-        [XmlElement]
-        public String AckTo { get; set; }
-
         public SynapseMessage()
         {
             Id = Guid.NewGuid();
@@ -46,7 +39,7 @@ namespace Synapse.MQ
 
         public override string ToString()
         {
-            return XmlUtils.Serialize<SynapseMessage>(this, false);
+            return XmlUtils.Serialize<SynapseMessage>(this, true);
         }
 
         public static SynapseMessage FromString(String xml)
@@ -57,6 +50,7 @@ namespace Synapse.MQ
         public static SynapseMessage GetAck(SynapseMessage message)
         {
             SynapseMessage ackMessage = new SynapseMessage();
+            ackMessage.Id = message.Id;
             ackMessage.Type = MessageType.ACK;
             ackMessage.TrackingId = message.TrackingId;
             return ackMessage;
