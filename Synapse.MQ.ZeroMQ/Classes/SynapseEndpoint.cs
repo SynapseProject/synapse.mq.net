@@ -9,7 +9,7 @@ using ZeroMQ;
 
 namespace Synapse.MQ.ZeroMQ
 {
-    public class SynapseEndpoint
+    public class SynapseEndpoint : ISynapseEndpoint
     {
         public String Name { get; set; }
         public ZContext Context { get; }
@@ -28,30 +28,34 @@ namespace Synapse.MQ.ZeroMQ
             Socket = new ZSocket(Context, SocketType);
         }
 
-        public void Bind()
+        internal void Bind()
         {
             Socket.Bind(Endpoint);
             Console.WriteLine(SocketType + " Socket Bound To " + Endpoint);
         }
 
-        public void Unbind()
+        internal void Unbind()
         {
             Socket.Unbind(Endpoint);
         }
 
-        public void Connect()
+        internal void Connect()
         {
             Socket.Connect(Endpoint);
             Console.WriteLine(SocketType + " Socket Connected To " + Endpoint);
         }
 
-        public void Disconnect()
+        internal void Disconnect()
         {
             Socket.Disconnect(Endpoint);
         }
 
+        public void SendMessage(SynapseMessage message)
+        {
+            SendMessage(message, null);
+        }
 
-        public void SendMessage(SynapseMessage message, String identity = null)
+        internal void SendMessage(SynapseMessage message, String identity = null)
         {
             ZError error;
             using (ZMessage outgoing = new ZMessage())
@@ -74,7 +78,7 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        public void ReceiveMessages(Func<SynapseMessage, SynapseEndpoint, SynapseMessage> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
+        internal void ReceiveMessages(Func<SynapseMessage, SynapseEndpoint, SynapseMessage> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage request;
@@ -121,7 +125,7 @@ namespace Synapse.MQ.ZeroMQ
 
 
 
-        public void ReceiveReplies(Func<SynapseMessage, String> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
+        internal void ReceiveReplies(Func<SynapseMessage, String> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage incoming;

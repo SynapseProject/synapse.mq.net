@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Synapse.MQ
 {
-    interface ISynapseController
+    public interface ISynapseController
     {
         // Inbound Message Processing Functions
         // Function implementations should return a SynapseMessage if a reply is to be sent, or NULL if not.

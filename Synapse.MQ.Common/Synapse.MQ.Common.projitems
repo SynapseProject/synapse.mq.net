@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseEndpoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\SynapseMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\XmlUtils.cs" />

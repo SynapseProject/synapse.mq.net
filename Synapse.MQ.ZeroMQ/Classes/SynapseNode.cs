@@ -9,7 +9,7 @@ namespace Synapse.MQ.ZeroMQ
 {
     public class SynapseNode : ISynapseNode
     {
-        public Func<SynapseMessage, SynapseMessage> ProcessExecutePlanRequest { get; set; }
+        public Func<SynapseMessage, ISynapseEndpoint, SynapseMessage> ProcessExecutePlanRequest { get; set; }
         public Func<SynapseMessage, SynapseMessage> ProcessPlanStatusReply { get; set; }
         public Func<SynapseMessage, SynapseMessage> ProcessAcks { get; set; }
 
@@ -59,7 +59,7 @@ namespace Synapse.MQ.ZeroMQ
             {
                 case MessageType.EXECUTEPLAN:
                     if (ProcessExecutePlanRequest != null)
-                        reply = ProcessExecutePlanRequest(message);
+                        reply = ProcessExecutePlanRequest(message, replyOn);
                     break;
                 case MessageType.ACK:
                     if (ProcessAcks != null)

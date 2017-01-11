@@ -4,11 +4,11 @@ using System.Text;
 
 namespace Synapse.MQ
 {
-    interface ISynapseNode
+    public interface ISynapseNode
     {
         // Inbound Message Processing Functions
         // Function implementations should return a SynapseMessage if a reply is to be sent, or NULL if not.
-        Func<SynapseMessage, SynapseMessage> ProcessExecutePlanRequest { get; set; }
+        Func<SynapseMessage, ISynapseEndpoint, SynapseMessage> ProcessExecutePlanRequest { get; set; }
         Func<SynapseMessage, SynapseMessage> ProcessPlanStatusReply { get; set; }
         Func<SynapseMessage, SynapseMessage> ProcessAcks { get; set; }
 

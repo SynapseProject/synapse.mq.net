@@ -14,6 +14,86 @@ namespace Synapse.MQ.Tester
     {
         static void Main(string[] args)
         {
+            String inboundUrl = @"tcp://localhost:5555";
+            String outboundUrl = @"tcp://localhost:5556";
+
+
+
+            if (args.Length > 0)
+            {
+                String mode = args[0].ToUpper();
+                if (args.Length > 1) { inboundUrl = args[1]; }
+                if (args.Length > 2) { outboundUrl = args[2]; }
+
+                if (mode == "PROXY")
+                {
+                    SynapseProxy proxy = new SynapseProxy(inboundUrl, outboundUrl);
+                    Thread proxyThread = new Thread(() => proxy.Start());
+                    proxyThread.Start();
+
+                    while (true) ;
+                }
+                else if (mode == "CONTROLLER")
+                {
+                    SynapseController controller = new SynapseController(inboundUrl, outboundUrl);
+                    controller.ProcessAcks = ProcessAcksController;
+                    controller.ProcessPlanStatus = ProcessPlanStatusRequest;
+                    controller.ProcessStatusUpdate = ProcessStatusUpdateRequest;
+
+                    int i = 0;
+                    String inputStr = String.Empty;
+                    while (true)
+                    {
+                        inputStr = Console.ReadLine().Trim();
+
+                        i++;
+                        SynapseMessage message = new SynapseMessage();
+                        message.SequenceNumber = i;
+                        message.TrackingId = "CONTROLLER_" + ("" + i).PadLeft(8, '0');
+                        message.Type = MessageType.EXECUTEPLAN;
+                        message.Body = inputStr;
+
+                        controller.SendMessage(message);
+                    }
+                }
+                else if (mode == "NODE")
+                {
+                    SynapseNode node = new SynapseNode(inboundUrl, outboundUrl);
+                    node.ProcessAcks = ProcessAcksNode;
+                    node.ProcessExecutePlanRequest = ProcessExecutePlanRequest;
+                    node.ProcessPlanStatusReply = ProcessPlanStatusReply;
+
+                    int i = 0;
+                    String inputStr = String.Empty;
+                    while (true)
+                    {
+                        inputStr = Console.ReadLine().Trim();
+
+                        i++;
+                        SynapseMessage message = new SynapseMessage();
+                        message.SequenceNumber = i;
+                        message.TrackingId = "NODE" + ("" + i).PadLeft(8, '0');
+                        message.Type = MessageType.PLANSTATUS_REQUEST;
+                        message.Body = inputStr;
+
+                        node.SendMessage(message);
+                    }
+                }
+            }
+            else
+                Usage();
+        }
+
+        static void Usage()
+        {
+            Console.WriteLine("Usage : Synapse.MQ.Tester.exe MODE [INBOUND_URL] [OUTBOUND_URL]");
+            Console.WriteLine("        - PROXY      : Used for Many to Many Messaging in ZeroMQ.  Forwards Messages on InboundUrl to OutboundUrl.");
+            Console.WriteLine("        - CONTROLLER : Sends Plan Start, Receives Status Update, Replies to Plan Status Requests.");
+            Console.WriteLine("        - NODE       : Receives Plan Start, Sends Status Update, Requests Plan Status and Receives Plan Status Reply.");
+        }
+
+        static void TestLocal(string[] args)
+        {
             SynapseProxy controllerProxy = new SynapseProxy(@"tcp://*:5555", @"tcp://*:5556");
             Thread cProxyThread = new Thread(() => controllerProxy.Start());
             cProxyThread.Start();
@@ -92,11 +172,24 @@ namespace Synapse.MQ.Tester
             return null;
         }
 
-        public static SynapseMessage ProcessExecutePlanRequest(SynapseMessage message)
+        public static SynapseMessage ProcessExecutePlanRequest(SynapseMessage message, ISynapseEndpoint endpoint)
         {
             Console.WriteLine("*** SynapseNode : ProcessExecutePlanRequests ***");
             Console.WriteLine(message);
             Console.WriteLine("************************************************");
+
+            for (int i=0; i<message.Body.Length; i++)
+            {
+                Thread.Sleep(3000);
+                SynapseMessage status = new SynapseMessage();
+                status.Type = MessageType.STATUS;
+                status.TrackingId = message.TrackingId;
+                status.SequenceNumber = i;
+                status.Body = message.Body.Substring(0, (i+1)).ToUpper();
+
+                if (endpoint != null)
+                    endpoint.SendMessage(status);
+            }
 
             return null;
         }
