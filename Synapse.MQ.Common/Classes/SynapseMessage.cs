@@ -8,7 +8,7 @@ using Synapse.MQ;
 
 namespace Synapse.MQ
 {
-    public enum MessageType { NONE, EXECUTE, STATUS, PLANSTATUS_REQUEST, PLANSTATUS_REPLY, ACK, REQUEST, REPLY }
+    public enum MessageType { NONE, EXECUTEPLAN, STATUS, PLANSTATUS_REQUEST, PLANSTATUS_REPLY, ACK }
 
     [Serializable, XmlRoot("SynapseMessage")]
     public class SynapseMessage

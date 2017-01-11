@@ -34,7 +34,7 @@ namespace Synapse.MQ.Tester
 
 
             SynapseMessage message = new SynapseMessage();
-            message.Type = MessageType.EXECUTE;
+            message.Type = MessageType.EXECUTEPLAN;
             message.Body = "Test Message";
             message.SequenceNumber = 1;
             message.TrackingId = "0001";

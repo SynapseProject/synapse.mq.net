@@ -57,7 +57,7 @@ namespace Synapse.MQ.ZeroMQ
             SynapseMessage reply = null;
             switch (message.Type)
             {
-                case MessageType.EXECUTE:
+                case MessageType.EXECUTEPLAN:
                     if (ProcessExecutePlanRequest != null)
                         reply = ProcessExecutePlanRequest(message);
                     break;
