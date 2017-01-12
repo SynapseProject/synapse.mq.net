@@ -18,8 +18,8 @@ namespace Synapse.MQ
         DateTime ReceivedDate { get; set; }
 
         // Methods
-        string Serialize();
-        ISynapseMessage Deserialize(String str);
+        String Serialize();
+        void Deserialize(String str);
         ISynapseMessage GetAck();
     }
 }

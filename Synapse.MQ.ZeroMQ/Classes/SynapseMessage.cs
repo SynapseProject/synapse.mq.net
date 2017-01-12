@@ -45,9 +45,18 @@ namespace Synapse.MQ.ZeroMQ
             return XmlUtils.Serialize<SynapseMessage>(this, false);
         }
 
-        public ISynapseMessage Deserialize(String xml)
+        public void Deserialize(String xml)
         {
-            return GetInstance(xml);
+            SynapseMessage message =  GetInstance(xml);
+
+            this.Body = message.Body;
+            this.CreationDate = message.CreationDate;
+            this.Id = message.Id;
+            this.ReceivedDate = message.ReceivedDate;
+            this.SentDate = message.SentDate;
+            this.SequenceNumber = message.SequenceNumber;
+            this.TrackingId = message.TrackingId;
+            this.Type = message.Type;
         }
 
         public override string ToString()
