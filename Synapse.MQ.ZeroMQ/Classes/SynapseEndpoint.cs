@@ -96,30 +96,33 @@ namespace Synapse.MQ.ZeroMQ
                     throw new ZException(error);
                 }
 
-                using (request)
-                {
-                    string identity = request[1].ReadString();
-                    String xml = request[2].ReadString();
+                new Thread(() => ProcessMessage(request, callback, sendAck, replyUsing)).Start();
 
-                    //TODO : Build Me
-                    SynapseMessage message = SynapseMessage.GetInstance(xml);
-                    message.ReceivedDate = DateTime.Now;
+            }
+        }
 
-                    //TODO : Debug - Remove Me
-                    Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+        internal void ProcessMessage(ZMessage request, Func<SynapseMessage, SynapseEndpoint, SynapseMessage> callback, Boolean sendAck, SynapseEndpoint replyUsing)
+        {
+            string identity = request[1].ReadString();
+            String xml = request[2].ReadString();
 
-                    if (sendAck && message.Type != MessageType.ACK)
-                    {
-                        replyUsing.SendMessage(message.GetAck());
-                    }
+            //TODO : Build Me
+            SynapseMessage message = SynapseMessage.GetInstance(xml);
+            message.ReceivedDate = DateTime.Now;
 
-                    if (callback != null)
-                    {
-                        SynapseMessage reply = callback(message, replyUsing);
-                        if (reply != null)
-                            replyUsing.SendMessage(reply);
-                    }
-                }
+            //TODO : Debug - Remove Me
+            Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+
+            if (sendAck && message.Type != MessageType.ACK)
+            {
+                replyUsing.SendMessage(message.GetAck());
+            }
+
+            if (callback != null)
+            {
+                SynapseMessage reply = callback(message, replyUsing);
+                if (reply != null)
+                    replyUsing.SendMessage(reply);
             }
         }
 
@@ -148,26 +151,28 @@ namespace Synapse.MQ.ZeroMQ
                         return;
                     throw new ZException(error);
                 }
-                using (incoming)
-                {
-                    String xml = incoming[0].ReadString();
 
-                    SynapseMessage message = SynapseMessage.GetInstance(xml);
-
-                    Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
-
-                    if (sendAck && message.Type != MessageType.ACK)
-                    {
-                        replyUsing.SendMessage(message.GetAck());
-                    }
-
-                    if (callback != null)
-                        callback(message);
-                }
+                new Thread(() => ProcessReply(incoming, callback, sendAck, replyUsing)).Start();
 
             }
         }
 
+        internal void ProcessReply(ZMessage incoming, Func<SynapseMessage, String> callback, Boolean sendAck, SynapseEndpoint replyUsing)
+        {
+            String xml = incoming[0].ReadString();
+
+            SynapseMessage message = SynapseMessage.GetInstance(xml);
+
+            Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+
+            if (sendAck && message.Type != MessageType.ACK)
+            {
+                replyUsing.SendMessage(message.GetAck());
+            }
+
+            if (callback != null)
+                callback(message);
+        }
 
     }
 }

@@ -6,6 +6,7 @@ namespace Synapse.MQ
 {
     public interface ISynapseMessage
     {
+        // Properties
         Guid Id { get; set; }
         String TrackingId { get; set; }
         int SequenceNumber { get; set; }
@@ -16,6 +17,7 @@ namespace Synapse.MQ
         DateTime SentDate { get; set; }
         DateTime ReceivedDate { get; set; }
 
+        // Methods
         string Serialize();
         ISynapseMessage Deserialize(String str);
         ISynapseMessage GetAck();
