@@ -6,12 +6,10 @@ using System.Xml.Serialization;
 
 using Synapse.MQ;
 
-namespace Synapse.MQ
+namespace Synapse.MQ.ZeroMQ
 {
-    public enum MessageType { NONE, EXECUTEPLAN, STATUS, PLANSTATUS_REQUEST, PLANSTATUS_REPLY, ACK }
-
     [Serializable, XmlRoot("SynapseMessage")]
-    public class SynapseMessage
+    public class SynapseMessage : ISynapseMessage
     {
         [XmlElement]
         public Guid Id { get; set; }
@@ -37,27 +35,32 @@ namespace Synapse.MQ
             CreationDate = DateTime.Now;
         }
 
-        public string ToXml(bool prettyPrint = false)
-        {
-            return XmlUtils.Serialize<SynapseMessage>(this, prettyPrint);
-        }
-
-        public static SynapseMessage FromXml(String xml)
+        public static SynapseMessage GetInstance(String xml)
         {
             return XmlUtils.Deserialize<SynapseMessage>(xml);
         }
 
-        public override string ToString()
+        public string Serialize()
         {
-            return ToXml(true);
+            return XmlUtils.Serialize<SynapseMessage>(this, false);
         }
 
-        public static SynapseMessage GetAck(SynapseMessage message)
+        public ISynapseMessage Deserialize(String xml)
+        {
+            return GetInstance(xml);
+        }
+
+        public override string ToString()
+        {
+            return XmlUtils.Serialize<SynapseMessage>(this, true);
+        }
+
+        public ISynapseMessage GetAck()
         {
             SynapseMessage ackMessage = new SynapseMessage();
-            ackMessage.Id = message.Id;
+            ackMessage.Id = this.Id;
             ackMessage.Type = MessageType.ACK;
-            ackMessage.TrackingId = message.TrackingId;
+            ackMessage.TrackingId = this.TrackingId;
             return ackMessage;
         }
     }

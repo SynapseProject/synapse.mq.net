@@ -11,8 +11,8 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseEndpoint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Classes\ISynapseNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Classes\SynapseMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\XmlUtils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\MessageType.cs" />
   </ItemGroup>
 </Project>

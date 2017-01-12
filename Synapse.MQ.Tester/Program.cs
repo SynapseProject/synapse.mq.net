@@ -138,7 +138,7 @@ namespace Synapse.MQ.Tester
 
         }
 
-        public static SynapseMessage ProcessAcksController(SynapseMessage message)
+        public static ISynapseMessage ProcessAcksController(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseController : ProcessAcks ***");
             Console.WriteLine(message);
@@ -147,7 +147,7 @@ namespace Synapse.MQ.Tester
             return null;
         }
 
-        public static SynapseMessage ProcessPlanStatusRequest(SynapseMessage message)
+        public static ISynapseMessage ProcessPlanStatusRequest(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseController : ProcessPlanStatusRequest ***");
             Console.WriteLine(message);
@@ -163,7 +163,7 @@ namespace Synapse.MQ.Tester
             return reply;
         }
 
-        public static SynapseMessage ProcessStatusUpdateRequest(SynapseMessage message)
+        public static ISynapseMessage ProcessStatusUpdateRequest(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseController : ProcessStatusUpdateRequest ***");
             Console.WriteLine(message);
@@ -172,7 +172,7 @@ namespace Synapse.MQ.Tester
             return null;
         }
 
-        public static SynapseMessage ProcessExecutePlanRequest(SynapseMessage message, ISynapseEndpoint endpoint)
+        public static ISynapseMessage ProcessExecutePlanRequest(ISynapseMessage message, ISynapseEndpoint endpoint)
         {
             Console.WriteLine("*** SynapseNode : ProcessExecutePlanRequests ***");
             Console.WriteLine(message);
@@ -194,7 +194,7 @@ namespace Synapse.MQ.Tester
             return null;
         }
 
-        public static SynapseMessage ProcessAcksNode(SynapseMessage message)
+        public static ISynapseMessage ProcessAcksNode(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseNode : ProcessAcks ***");
             Console.WriteLine(message);
@@ -203,7 +203,7 @@ namespace Synapse.MQ.Tester
             return null;
         }
 
-        public static SynapseMessage ProcessPlanStatusReply(SynapseMessage message)
+        public static ISynapseMessage ProcessPlanStatusReply(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseNode : ProcessPlanStatusReply ***");
             Console.WriteLine(message);

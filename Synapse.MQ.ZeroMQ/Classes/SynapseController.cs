@@ -11,9 +11,9 @@ namespace Synapse.MQ.ZeroMQ
 {
     public class SynapseController : ISynapseController
     {
-        public Func<SynapseMessage, SynapseMessage> ProcessPlanStatus { get; set; }
-        public Func<SynapseMessage, SynapseMessage> ProcessStatusUpdate { get; set; }
-        public Func<SynapseMessage, SynapseMessage> ProcessAcks { get; set; }
+        public Func<ISynapseMessage, ISynapseMessage> ProcessPlanStatus { get; set; }
+        public Func<ISynapseMessage, ISynapseMessage> ProcessStatusUpdate { get; set; }
+        public Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
         private String OutboundUrl = @"tcp://localhost:5555";
         private String InboundUrl = @"tcp://localhost:5558";
@@ -61,15 +61,15 @@ namespace Synapse.MQ.ZeroMQ
             {
                 case MessageType.PLANSTATUS_REQUEST:
                     if (this.ProcessPlanStatus != null)
-                        reply = ProcessPlanStatus(message);
+                        reply = (SynapseMessage)ProcessPlanStatus(message);
                     break;
                 case MessageType.STATUS:
                     if (this.ProcessStatusUpdate != null)
-                        reply = ProcessStatusUpdate(message);
+                        reply = (SynapseMessage)ProcessStatusUpdate(message);
                     break;
                 case MessageType.ACK:
                     if (this.ProcessAcks != null)
-                        reply = ProcessAcks(message);
+                        reply = (SynapseMessage)ProcessAcks(message);
                     break;
                 default:
                     throw new Exception("Unknown MessageType [" + message.Type + "] Received.");
@@ -84,7 +84,7 @@ namespace Synapse.MQ.ZeroMQ
             return message.Id;
         }
 */
-        public Guid SendMessage(SynapseMessage message)
+        public Guid SendMessage(ISynapseMessage message)
         {
             Outbound.SendMessage(message);
             return message.Id;

@@ -5,7 +5,7 @@ using System.Xml;
 using System.IO;
 using System.Xml.Serialization;
 
-namespace Synapse.MQ
+namespace Synapse.MQ.ZeroMQ
 {
     class XmlUtils
     {

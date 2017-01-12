@@ -50,12 +50,12 @@ namespace Synapse.MQ.ZeroMQ
             Socket.Disconnect(Endpoint);
         }
 
-        public void SendMessage(SynapseMessage message)
+        public void SendMessage(ISynapseMessage message)
         {
             SendMessage(message, null);
         }
 
-        internal void SendMessage(SynapseMessage message, String identity = null)
+        internal void SendMessage(ISynapseMessage message, String identity = null)
         {
             ZError error;
             using (ZMessage outgoing = new ZMessage())
@@ -66,7 +66,7 @@ namespace Synapse.MQ.ZeroMQ
                     outgoing.Add(new ZFrame(Encoding.UTF8.GetBytes(identity)));
 
                 message.SentDate = DateTime.Now;
-                outgoing.Add(new ZFrame(message.ToXml()));
+                outgoing.Add(new ZFrame(message.Serialize()));
                 Console.WriteLine("<<< [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
                 if (!Socket.Send(outgoing, out error))
                 {
@@ -102,7 +102,7 @@ namespace Synapse.MQ.ZeroMQ
                     String xml = request[2].ReadString();
 
                     //TODO : Build Me
-                    SynapseMessage message = SynapseMessage.FromXml(xml);
+                    SynapseMessage message = SynapseMessage.GetInstance(xml);
                     message.ReceivedDate = DateTime.Now;
 
                     //TODO : Debug - Remove Me
@@ -110,7 +110,7 @@ namespace Synapse.MQ.ZeroMQ
 
                     if (sendAck && message.Type != MessageType.ACK)
                     {
-                        replyUsing.SendMessage(SynapseMessage.GetAck(message));
+                        replyUsing.SendMessage(message.GetAck());
                     }
 
                     if (callback != null)
@@ -152,13 +152,13 @@ namespace Synapse.MQ.ZeroMQ
                 {
                     String xml = incoming[0].ReadString();
 
-                    SynapseMessage message = SynapseMessage.FromXml(xml);
+                    SynapseMessage message = SynapseMessage.GetInstance(xml);
 
                     Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 
                     if (sendAck && message.Type != MessageType.ACK)
                     {
-                        replyUsing.SendMessage(SynapseMessage.GetAck(message));
+                        replyUsing.SendMessage(message.GetAck());
                     }
 
                     if (callback != null)

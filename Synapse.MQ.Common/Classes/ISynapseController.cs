@@ -8,12 +8,12 @@ namespace Synapse.MQ
     {
         // Inbound Message Processing Functions
         // Function implementations should return a SynapseMessage if a reply is to be sent, or NULL if not.
-        Func<SynapseMessage, SynapseMessage> ProcessPlanStatus { get; set; }
-        Func<SynapseMessage, SynapseMessage> ProcessStatusUpdate { get; set; }
-        Func<SynapseMessage, SynapseMessage> ProcessAcks { get; set; }
+        Func<ISynapseMessage, ISynapseMessage> ProcessPlanStatus { get; set; }
+        Func<ISynapseMessage, ISynapseMessage> ProcessStatusUpdate { get; set; }
+        Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
         // Outbound Actions
 //        Guid SendExecutePlanRequest(SynapseMessage message);
-        Guid SendMessage(SynapseMessage message);
+        Guid SendMessage(ISynapseMessage message);
     }
 }

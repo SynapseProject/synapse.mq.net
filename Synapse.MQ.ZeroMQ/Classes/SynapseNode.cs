@@ -9,9 +9,9 @@ namespace Synapse.MQ.ZeroMQ
 {
     public class SynapseNode : ISynapseNode
     {
-        public Func<SynapseMessage, ISynapseEndpoint, SynapseMessage> ProcessExecutePlanRequest { get; set; }
-        public Func<SynapseMessage, SynapseMessage> ProcessPlanStatusReply { get; set; }
-        public Func<SynapseMessage, SynapseMessage> ProcessAcks { get; set; }
+        public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessExecutePlanRequest { get; set; }
+        public Func<ISynapseMessage, ISynapseMessage> ProcessPlanStatusReply { get; set; }
+        public Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
         private String InboundUrl = @"tcp://localhost:5556";
         private String OutboundUrl = @"tcp://localhost:5557";
@@ -59,15 +59,15 @@ namespace Synapse.MQ.ZeroMQ
             {
                 case MessageType.EXECUTEPLAN:
                     if (ProcessExecutePlanRequest != null)
-                        reply = ProcessExecutePlanRequest(message, replyOn);
+                        reply = (SynapseMessage)ProcessExecutePlanRequest(message, replyOn);
                     break;
                 case MessageType.ACK:
                     if (ProcessAcks != null)
-                        reply = ProcessAcks(message);
+                        reply = (SynapseMessage)ProcessAcks(message);
                     break;
                 case MessageType.PLANSTATUS_REPLY:
                     if (ProcessPlanStatusReply != null)
-                        reply = ProcessPlanStatusReply(message);
+                        reply = (SynapseMessage)ProcessPlanStatusReply(message);
                     break;
                 default:
                     throw new Exception("Unknown MessageType [" + message.Type + "] Received.");
@@ -104,7 +104,7 @@ namespace Synapse.MQ.ZeroMQ
                 }
         */
 
-        public Guid SendMessage(SynapseMessage message)
+        public Guid SendMessage(ISynapseMessage message)
         {
             Outbound.SendMessage(message);
             return message.Id;
