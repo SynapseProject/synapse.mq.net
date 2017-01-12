@@ -78,11 +78,11 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        internal void ReceiveMessages(Func<SynapseMessage, SynapseEndpoint, SynapseMessage> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
+        public void ReceiveMessages(Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage request;
-            SynapseEndpoint replyUsing = this;
+            ISynapseEndpoint replyUsing = this;
 
             if (replyOn != null)
                 replyUsing = replyOn;
@@ -101,7 +101,7 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        internal void ProcessMessage(ZMessage request, Func<SynapseMessage, SynapseEndpoint, SynapseMessage> callback, Boolean sendAck, SynapseEndpoint replyUsing)
+        internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
         {
             string identity = request[1].ReadString();
             String xml = request[2].ReadString();
@@ -120,7 +120,7 @@ namespace Synapse.MQ.ZeroMQ
 
             if (callback != null)
             {
-                SynapseMessage reply = callback(message, replyUsing);
+                ISynapseMessage reply = callback(message, replyUsing);
                 if (reply != null)
                     replyUsing.SendMessage(reply);
             }
@@ -128,12 +128,12 @@ namespace Synapse.MQ.ZeroMQ
 
 
 
-        internal void ReceiveReplies(Func<SynapseMessage, String> callback, Boolean sendAck = false, SynapseEndpoint replyOn = null)
+        public void ReceiveReplies(Func<ISynapseMessage, String> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage incoming;
             ZPollItem poll = ZPollItem.CreateReceiver();
-            SynapseEndpoint replyUsing = this;
+            ISynapseEndpoint replyUsing = this;
 
             if (replyOn != null)
                 replyUsing = replyOn;
@@ -157,7 +157,7 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        internal void ProcessReply(ZMessage incoming, Func<SynapseMessage, String> callback, Boolean sendAck, SynapseEndpoint replyUsing)
+        internal void ProcessReply(ZMessage incoming, Func<ISynapseMessage, String> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
         {
             String xml = incoming[0].ReadString();
 

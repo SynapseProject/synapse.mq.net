@@ -15,14 +15,13 @@ namespace Synapse.MQ.ZeroMQ
         public Func<ISynapseMessage, ISynapseMessage> ProcessStatusUpdate { get; set; }
         public Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
-        private String OutboundUrl = @"tcp://localhost:5555";
         private String InboundUrl = @"tcp://localhost:5558";
+        private String OutboundUrl = @"tcp://localhost:5555";
 
-        private SynapseEndpoint Outbound = null;
         private SynapseEndpoint Inbound = null;
+        private SynapseEndpoint Outbound = null;
 
         private Thread requestPoller = null;
-//        private Thread replyPoller = null;
 
         public SynapseController()
         {
@@ -50,11 +49,9 @@ namespace Synapse.MQ.ZeroMQ
 
             requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, true, Outbound));
             requestPoller.Start();
-//            replyPoller = new Thread(() => Inbound.ReceiveReplies(ProcessReplies, true, Outbound));
-//            replyPoller.Start();
         }
 
-        private SynapseMessage ProcessInbound(SynapseMessage message, SynapseEndpoint replyOn)
+        private ISynapseMessage ProcessInbound(ISynapseMessage message, ISynapseEndpoint replyOn)
         {
             SynapseMessage reply = null;
             switch (message.Type)
@@ -78,12 +75,6 @@ namespace Synapse.MQ.ZeroMQ
             return reply;
         }
 
-/*        public Guid SendExecutePlanRequest(SynapseMessage message)
-        {
-            Outbound.SendMessage(message);
-            return message.Id;
-        }
-*/
         public Guid SendMessage(ISynapseMessage message)
         {
             Outbound.SendMessage(message);

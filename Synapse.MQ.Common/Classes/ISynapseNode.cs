@@ -13,8 +13,6 @@ namespace Synapse.MQ
         Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
         // Outbound Actions
-//        Guid SendStatusUpdateRequest(SynapseMessage message);
-//        Guid SendPlanStatusRequest(SynapseMessage message);
         Guid SendMessage(ISynapseMessage message);
     }
 }
