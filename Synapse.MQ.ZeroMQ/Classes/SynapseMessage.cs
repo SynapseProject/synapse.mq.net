@@ -70,6 +70,7 @@ namespace Synapse.MQ.ZeroMQ
             ackMessage.Id = this.Id;
             ackMessage.Type = MessageType.ACK;
             ackMessage.TrackingId = this.TrackingId;
+            ackMessage.SequenceNumber = 1;
             return ackMessage;
         }
     }
