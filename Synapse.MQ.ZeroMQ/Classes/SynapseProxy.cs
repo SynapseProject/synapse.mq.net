@@ -13,7 +13,7 @@ namespace Synapse.MQ.ZeroMQ
         SynapseEndpoint Listener;
         SynapseEndpoint Sender;
 
-        public SynapseProxy(String listenOn = "tcp://*:5555", String sendOn = "tcp://*:5556", ZContext context = null)
+        public SynapseProxy(String[] listenOn, String[] sendOn, ZContext context = null)
         {
             ZContext ctx = context;
             if (ctx == null)
@@ -28,14 +28,54 @@ namespace Synapse.MQ.ZeroMQ
             Listener.Bind();
             Sender.Bind();
 
+            ZPollItem poll = ZPollItem.CreateReceiver();
             ZError error;
-            if (!ZContext.Proxy(Listener.Socket, Sender.Socket, out error))
+            ZMessage message;
+
+            while (true)
             {
-                //TODO : Unbind and Dispose of Sockets????
-                if (error == ZError.ETERM)
-                    return;     // Interrupted
-                throw new ZException(error);
+                if (Listener.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
+                {
+                    WriteMessage(message);
+                    Sender.Socket.Send(message);
+                }
+                else
+                {
+                    if (error == ZError.ETERM)
+                        return;
+                    if (error != ZError.EAGAIN)
+                        throw new ZException(error);
+                }
+
+                if (Sender.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
+                {
+                    WriteMessage(message);
+                    Listener.Socket.Send(message);
+                }
+                else
+                {
+                    if (error == ZError.ETERM)
+                        return;
+                    if (error != ZError.EAGAIN)
+                        throw new ZException(error);
+                }
             }
+
+            /*            if (!ZContext.Proxy(Listener.Socket, Sender.Socket, out error))
+                        {
+                            //TODO : Unbind and Dispose of Sockets????
+                            if (error == ZError.ETERM)
+                                return;     // Interrupted
+                            throw new ZException(error);
+                        } */
+        }
+
+        public static void WriteMessage(ZMessage message)
+        {
+            Console.Write(">> ");
+            for (int i=0; i<message.Count; i++)
+                Console.Write("[" + message[i].ReadString() + "]");
+            Console.WriteLine();
         }
     }
 }

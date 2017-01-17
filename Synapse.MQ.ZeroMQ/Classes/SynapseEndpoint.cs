@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Collections;
 
 using ZeroMQ;
 
@@ -15,12 +16,15 @@ namespace Synapse.MQ.ZeroMQ
         public ZContext Context { get; }
         public ZSocket Socket { get; }
         public ZSocketType SocketType { get; }
-        public String Endpoint { get; }
+        public List<String> Endpoints { get; }
 
-        public SynapseEndpoint(String name, String endpoint, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
+        public SynapseEndpoint(String name, String[] endpoints, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
         {
             Name = name;
-            Endpoint = endpoint;
+            Endpoints = new List<String>();
+            foreach (String endpoint in endpoints)
+                if (!String.IsNullOrWhiteSpace(endpoint))
+                    Endpoints.Add(endpoint.Trim());
             Context = context;
             SocketType = socketType;
             if (Context == null)
@@ -30,24 +34,32 @@ namespace Synapse.MQ.ZeroMQ
 
         internal void Bind()
         {
-            Socket.Bind(Endpoint);
-            Console.WriteLine(SocketType + " Socket Bound To " + Endpoint);
+            foreach (String endpoint in Endpoints)
+            {
+                Socket.Bind(endpoint);
+                Console.WriteLine(SocketType + " Socket Bound To " + endpoint);
+            }
         }
 
         internal void Unbind()
         {
-            Socket.Unbind(Endpoint);
+            foreach (String endpoint in Endpoints)
+                Socket.Unbind(endpoint);
         }
 
         internal void Connect()
         {
-            Socket.Connect(Endpoint);
-            Console.WriteLine(SocketType + " Socket Connected To " + Endpoint);
+            foreach (String endpoint in Endpoints)
+            {
+                Socket.Connect(endpoint);
+                Console.WriteLine(SocketType + " Socket Connected To " + endpoint);
+            }
         }
 
         internal void Disconnect()
         {
-            Socket.Disconnect(Endpoint);
+            foreach (String endpoint in Endpoints)
+                Socket.Disconnect(endpoint);
         }
 
         public void SendMessage(ISynapseMessage message)
@@ -67,7 +79,7 @@ namespace Synapse.MQ.ZeroMQ
 
                 message.SentDate = DateTime.Now;
                 outgoing.Add(new ZFrame(message.Serialize()));
-                Console.WriteLine("<<< [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+                Console.WriteLine("<<< [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
                 if (!Socket.Send(outgoing, out error))
                 {
                     if (error == ZError.ETERM)
@@ -111,7 +123,7 @@ namespace Synapse.MQ.ZeroMQ
             message.ReceivedDate = DateTime.Now;
 
             //TODO : Debug - Remove Me
-            Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+            Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 
             if (sendAck && message.Type != MessageType.ACK)
             {
@@ -163,7 +175,7 @@ namespace Synapse.MQ.ZeroMQ
 
             SynapseMessage message = SynapseMessage.GetInstance(xml);
 
-            Console.WriteLine(">>> [" + this.Name + "][" + this.Endpoint + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+            Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 
             if (sendAck && message.Type != MessageType.ACK)
             {

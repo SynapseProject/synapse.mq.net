@@ -13,8 +13,8 @@ namespace Synapse.MQ.ZeroMQ
         public Func<ISynapseMessage, ISynapseMessage> ProcessPlanStatusReply { get; set; }
         public Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
-        private String InboundUrl = @"tcp://localhost:5556";
-        private String OutboundUrl = @"tcp://localhost:5557";
+        private String[] InboundUrl = { @"tcp://localhost:5556" };
+        private String[] OutboundUrl = { @"tcp://localhost:5557" };
 
         private SynapseEndpoint Inbound = null;
         private SynapseEndpoint Outbound = null;
@@ -26,7 +26,7 @@ namespace Synapse.MQ.ZeroMQ
             init();   
         }
 
-        public SynapseNode(String inboundUrl, String outboundUrl)
+        public SynapseNode(String[] inboundUrl, String[] outboundUrl)
         {
             InboundUrl = inboundUrl;
             OutboundUrl = outboundUrl;
