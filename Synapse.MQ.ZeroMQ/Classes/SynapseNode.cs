@@ -10,7 +10,6 @@ namespace Synapse.MQ.ZeroMQ
     public class SynapseNode : ISynapseNode
     {
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessExecutePlanRequest { get; set; }
-        public Func<ISynapseMessage, ISynapseMessage> ProcessPlanStatusReply { get; set; }
         public Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
         private String[] InboundUrl = { @"tcp://localhost:5556" };
@@ -36,7 +35,6 @@ namespace Synapse.MQ.ZeroMQ
         private void init()
         {
             ProcessExecutePlanRequest = null;
-            ProcessPlanStatusReply = null;
             ProcessAcks = null;
 
             Outbound = new SynapseEndpoint("Node", OutboundUrl);
@@ -61,10 +59,6 @@ namespace Synapse.MQ.ZeroMQ
                 case MessageType.ACK:
                     if (ProcessAcks != null)
                         reply = (SynapseMessage)ProcessAcks(message);
-                    break;
-                case MessageType.PLANSTATUS_REPLY:
-                    if (ProcessPlanStatusReply != null)
-                        reply = (SynapseMessage)ProcessPlanStatusReply(message);
                     break;
                 default:
                     throw new Exception("Unknown MessageType [" + message.Type + "] Received.");

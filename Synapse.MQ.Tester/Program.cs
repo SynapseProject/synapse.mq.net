@@ -35,7 +35,6 @@ namespace Synapse.MQ.Tester
                 {
                     SynapseController controller = new SynapseController(inboundUrl, outboundUrl);
                     controller.ProcessAcks = ProcessAcksController;
-                    controller.ProcessPlanStatus = ProcessPlanStatusRequest;
                     controller.ProcessStatusUpdate = ProcessStatusUpdateRequest;
 
                     int i = 0;
@@ -59,23 +58,6 @@ namespace Synapse.MQ.Tester
                     SynapseNode node = new SynapseNode(inboundUrl, outboundUrl);
                     node.ProcessAcks = ProcessAcksNode;
                     node.ProcessExecutePlanRequest = ProcessExecutePlanRequest;
-                    node.ProcessPlanStatusReply = ProcessPlanStatusReply;
-
-                    int i = 0;
-                    String inputStr = String.Empty;
-                    while (true)
-                    {
-                        inputStr = Console.ReadLine().Trim();
-
-                        i++;
-                        SynapseMessage message = new SynapseMessage();
-                        message.SequenceNumber = i;
-                        message.TrackingId = "NODE_" + ("" + i).PadLeft(8, '0');
-                        message.Type = MessageType.PLANSTATUS_REQUEST;
-                        message.Body = inputStr;
-
-                        node.SendMessage(message);
-                    }
                 }
             }
             else
@@ -99,22 +81,6 @@ namespace Synapse.MQ.Tester
 
             return null;
         }
-
-        public static ISynapseMessage ProcessPlanStatusRequest(ISynapseMessage message)
-        {
-            Console.WriteLine("*** SynapseController : ProcessPlanStatusRequest ***");
-            Console.WriteLine(message);
-            Console.WriteLine("************************************************");
-
-            SynapseMessage reply = new SynapseMessage();
-            reply.Type = MessageType.PLANSTATUS_REPLY;
-            reply.Body = "Plan [" + message.Body + "]  Status : In Progress";
-            reply.SequenceNumber = 1;
-            reply.TrackingId = message.TrackingId;
-
-            return reply;
-        }
-
         public static ISynapseMessage ProcessStatusUpdateRequest(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseController : ProcessStatusUpdateRequest ***");
@@ -149,15 +115,6 @@ namespace Synapse.MQ.Tester
         public static ISynapseMessage ProcessAcksNode(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseNode : ProcessAcks ***");
-            Console.WriteLine(message);
-            Console.WriteLine("************************************************");
-
-            return null;
-        }
-
-        public static ISynapseMessage ProcessPlanStatusReply(ISynapseMessage message)
-        {
-            Console.WriteLine("*** SynapseNode : ProcessPlanStatusReply ***");
             Console.WriteLine(message);
             Console.WriteLine("************************************************");
 

@@ -8,8 +8,7 @@ namespace Synapse.MQ
         NONE,
         EXECUTEPLAN,
         STATUS,
-        PLANSTATUS_REQUEST,
-        PLANSTATUS_REPLY,
+        CANCELPLAN,
         ACK
     }
 }

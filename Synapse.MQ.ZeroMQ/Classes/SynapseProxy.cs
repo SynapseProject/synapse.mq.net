@@ -60,14 +60,16 @@ namespace Synapse.MQ.ZeroMQ
                         throw new ZException(error);
                 }
             }
-
-            /*            if (!ZContext.Proxy(Listener.Socket, Sender.Socket, out error))
+// TODO : Replace Above Code With Lines Below Once Debugging Is Completed.
+/*  
+                        if (!ZContext.Proxy(Listener.Socket, Sender.Socket, out error))
                         {
                             //TODO : Unbind and Dispose of Sockets????
                             if (error == ZError.ETERM)
                                 return;     // Interrupted
                             throw new ZException(error);
-                        } */
+                        } 
+*/
         }
 
         public static void WriteMessage(ZMessage message)

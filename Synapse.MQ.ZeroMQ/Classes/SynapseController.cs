@@ -11,7 +11,6 @@ namespace Synapse.MQ.ZeroMQ
 {
     public class SynapseController : ISynapseController
     {
-        public Func<ISynapseMessage, ISynapseMessage> ProcessPlanStatus { get; set; }
         public Func<ISynapseMessage, ISynapseMessage> ProcessStatusUpdate { get; set; }
         public Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
 
@@ -37,7 +36,6 @@ namespace Synapse.MQ.ZeroMQ
 
         private void init()
         {
-            ProcessPlanStatus = null;
             ProcessStatusUpdate = null;
             ProcessAcks = null;
 
@@ -56,10 +54,6 @@ namespace Synapse.MQ.ZeroMQ
             SynapseMessage reply = null;
             switch (message.Type)
             {
-                case MessageType.PLANSTATUS_REQUEST:
-                    if (this.ProcessPlanStatus != null)
-                        reply = (SynapseMessage)ProcessPlanStatus(message);
-                    break;
                 case MessageType.STATUS:
                     if (this.ProcessStatusUpdate != null)
                         reply = (SynapseMessage)ProcessStatusUpdate(message);
