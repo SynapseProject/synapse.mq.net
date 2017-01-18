@@ -16,17 +16,20 @@ namespace Synapse.MQ.Tester
         {
             String[] inboundUrl = { @"tcp://localhost:5555" };
             String[] outboundUrl = { @"tcp://localhost:5556" };
+            bool debugMode = false;
 
             if (args.Length > 0)
             {
                 String mode = args[0].ToUpper();
                 if (args.Length > 1) { inboundUrl = args[1].Split(','); }
                 if (args.Length > 2) { outboundUrl = args[2].Split(','); }
+                if (args.Length > 3) { debugMode = bool.Parse(args[3]); }
 
                 if (mode == "PROXY")
                 {
                     SynapseProxy proxy = new SynapseProxy(inboundUrl, outboundUrl);
                     Thread proxyThread = new Thread(() => proxy.Start());
+                    proxy.Debug = debugMode;
                     proxyThread.Start();
 
                     while (true) ;
@@ -75,11 +78,12 @@ namespace Synapse.MQ.Tester
 
         static void Usage()
         {
-            Console.WriteLine("Usage : Synapse.MQ.Tester.exe MODE [INBOUND_URL(S)] [OUTBOUND_URL(S)]");
+            Console.WriteLine("Usage : Synapse.MQ.Tester.exe MODE [INBOUND_URL(S)] [OUTBOUND_URL(S)] [DEBUG_FLAG]");
             Console.WriteLine("        - PROXY      : Used for Many to Many Messaging in ZeroMQ.  Forwards Messages on InboundUrl to OutboundUrl.");
             Console.WriteLine("        - CONTROLLER : Sends Plan Start, Receives Status Update, Replies to Plan Status Requests.");
             Console.WriteLine("        - NODE       : Receives Plan Start, Sends Status Update, Requests Plan Status and Receives Plan Status Reply.");
             Console.WriteLine("        - URL(S)     : Comma Separated List of ZSocket Endpoints.");
+            Console.WriteLine("        - DEBUG_FLAG : Puts Synapse Object Into Debug Mode (True/False)");
         }
 
         public static ISynapseMessage ProcessAcksController(ISynapseMessage message)

@@ -12,6 +12,7 @@ namespace Synapse.MQ.ZeroMQ
     {
         SynapseEndpoint Listener;
         SynapseEndpoint Sender;
+        public bool Debug { get; set; }
 
         public SynapseProxy(String[] listenOn, String[] sendOn, ZContext context = null)
         {
@@ -27,6 +28,7 @@ namespace Synapse.MQ.ZeroMQ
         {
             Listener.Bind();
             Sender.Bind();
+            Console.WriteLine("Debug Mode : " + Debug);
 
             ZPollItem poll = ZPollItem.CreateReceiver();
             ZError error;
@@ -36,7 +38,8 @@ namespace Synapse.MQ.ZeroMQ
             {
                 if (Listener.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
                 {
-                    WriteMessage(message);
+                    if (Debug)
+                        WriteMessage(message);
                     Sender.Socket.Send(message);
                 }
                 else
@@ -49,7 +52,8 @@ namespace Synapse.MQ.ZeroMQ
 
                 if (Sender.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
                 {
-                    WriteMessage(message);
+                    if (Debug)
+                        WriteMessage(message);
                     Listener.Socket.Send(message);
                 }
                 else
