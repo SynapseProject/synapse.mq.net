@@ -47,8 +47,16 @@ namespace Synapse.MQ.Tester
                         SynapseMessage message = new SynapseMessage();
                         message.SequenceNumber = i;
                         message.TrackingId = "CONTROLLER_" + ("" + i).PadLeft(8, '0');
-                        message.Type = MessageType.EXECUTEPLAN;
-                        message.Body = inputStr;
+                        if (inputStr.ToUpper().StartsWith("CANCEL,"))
+                        {
+                            message.Type = MessageType.CANCELPLAN;
+                            message.Body = inputStr.Substring(7);
+                        }
+                        else
+                        {
+                            message.Type = MessageType.EXECUTEPLAN;
+                            message.Body = inputStr;
+                        }
 
                         controller.SendMessage(message);
                     }
@@ -58,6 +66,7 @@ namespace Synapse.MQ.Tester
                     SynapseNode node = new SynapseNode(inboundUrl, outboundUrl);
                     node.ProcessAcks = ProcessAcksNode;
                     node.ProcessExecutePlanRequest = ProcessExecutePlanRequest;
+                    node.ProcessCancelPlanRequest = ProcessCancelPlanRequest;
                 }
             }
             else
@@ -115,6 +124,15 @@ namespace Synapse.MQ.Tester
         public static ISynapseMessage ProcessAcksNode(ISynapseMessage message)
         {
             Console.WriteLine("*** SynapseNode : ProcessAcks ***");
+            Console.WriteLine(message);
+            Console.WriteLine("************************************************");
+
+            return null;
+        }
+
+        public static ISynapseMessage ProcessCancelPlanRequest(ISynapseMessage message)
+        {
+            Console.WriteLine("*** SynapseNode : ProcessCancelPlanRequest ***");
             Console.WriteLine(message);
             Console.WriteLine("************************************************");
 

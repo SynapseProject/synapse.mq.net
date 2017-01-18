@@ -11,6 +11,7 @@ namespace Synapse.MQ.ZeroMQ
     {
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessExecutePlanRequest { get; set; }
         public Func<ISynapseMessage, ISynapseMessage> ProcessAcks { get; set; }
+        public Func<ISynapseMessage, ISynapseMessage> ProcessCancelPlanRequest { get; set; }
 
         private String[] InboundUrl = { @"tcp://localhost:5556" };
         private String[] OutboundUrl = { @"tcp://localhost:5557" };
@@ -59,6 +60,10 @@ namespace Synapse.MQ.ZeroMQ
                 case MessageType.ACK:
                     if (ProcessAcks != null)
                         reply = (SynapseMessage)ProcessAcks(message);
+                    break;
+                case MessageType.CANCELPLAN:
+                    if (ProcessCancelPlanRequest != null)
+                        reply = (SynapseMessage)ProcessCancelPlanRequest(message);
                     break;
                 default:
                     throw new Exception("Unknown MessageType [" + message.Type + "] Received.");
