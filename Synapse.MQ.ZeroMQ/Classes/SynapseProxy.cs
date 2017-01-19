@@ -58,7 +58,7 @@ namespace Synapse.MQ.ZeroMQ
                 if (Listener.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
                 {
                     if (Debug)
-                        WriteMessage(message);
+                        ZeroMQUtils.WriteRawMessage(message);
                     Sender.Socket.Send(message);
                 }
                 else
@@ -72,7 +72,7 @@ namespace Synapse.MQ.ZeroMQ
                 if (Sender.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
                 {
                     if (Debug)
-                        WriteMessage(message);
+                        ZeroMQUtils.WriteRawMessage(message);
                     Listener.Socket.Send(message);
                 }
                 else
@@ -93,14 +93,6 @@ namespace Synapse.MQ.ZeroMQ
                             throw new ZException(error);
                         } 
 */
-        }
-
-        public static void WriteMessage(ZMessage message)
-        {
-            Console.Write(">> ");
-            for (int i=0; i<message.Count; i++)
-                Console.Write("[" + message[i].ReadString() + "]");
-            Console.WriteLine();
         }
     }
 }

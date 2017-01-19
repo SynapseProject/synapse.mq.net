@@ -122,54 +122,13 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        public void SubscribeToMessages(Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
-        {
-            ZError error;
-            ZMessage request;
-            ISynapseEndpoint replyUsing = this;
-
-            while (true)
-            {
-                if (null == (request = Socket.ReceiveMessage(out error)))
-                {
-                    if (error == ZError.ETERM)
-                        return;
-                    throw new ZException(error);
-                }
-
-                new Thread(() => ProcessSubscribeMessage(request, callback, sendAck, replyUsing)).Start();
-            }
-        }
-
         internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
         {
-            string identity = request[1].ReadString();
-            String xml = request[2].ReadString();
+            int frameCount = request.Count;
 
-            //TODO : Build Me
-            SynapseMessage message = SynapseMessage.GetInstance(xml);
-            message.ReceivedDate = DateTime.Now;
-
-            //TODO : Debug - Remove Me
-            Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
-
-            if (sendAck && message.Type != MessageType.ACK)
-            {
-                replyUsing.SendMessage(message.GetAck());
-            }
-
-            if (callback != null)
-            {
-                ISynapseMessage reply = callback(message, replyUsing);
-                if (reply != null)
-                    replyUsing.SendMessage(reply);
-            }
-        }
-
-        internal void ProcessSubscribeMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
-        {
-            String identity = request[0].ReadString();
-            String xml = request[1].ReadString();
+            // Last 2 Frames Are Identity and Xml.  ReqRep Proxy Adds Frames  While PubSub Doesn't.
+            string identity = request[frameCount - 2].ReadString();
+            String xml = request[frameCount - 1].ReadString();
 
             SynapseMessage message = SynapseMessage.GetInstance(xml);
             message.ReceivedDate = DateTime.Now;
@@ -189,7 +148,6 @@ namespace Synapse.MQ.ZeroMQ
                     replyUsing.SendMessage(reply);
             }
         }
-
 
         public void ReceiveReplies(Func<ISynapseMessage, String> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
         {

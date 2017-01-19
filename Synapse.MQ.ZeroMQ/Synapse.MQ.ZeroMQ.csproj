@@ -53,6 +53,7 @@
     <Compile Include="Classes\SynapseProxy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\XmlUtils.cs" />
+    <Compile Include="Utils\ZeroMQUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

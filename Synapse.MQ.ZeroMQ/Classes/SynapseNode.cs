@@ -61,7 +61,7 @@ namespace Synapse.MQ.ZeroMQ
             requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, true, Outbound));
             requestPoller.Start();
 
-            subscribePoller = new Thread(() => Subscriber.SubscribeToMessages(ProcessCancelPlanRequest, false, Outbound));
+            subscribePoller = new Thread(() => Subscriber.ReceiveMessages(ProcessCancelPlanRequest, false, Outbound));
             subscribePoller.Start();
         }
 
