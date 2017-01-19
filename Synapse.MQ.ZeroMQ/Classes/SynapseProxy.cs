@@ -8,20 +8,38 @@ using ZeroMQ;
 
 namespace Synapse.MQ.ZeroMQ
 {
+    public enum ProxyType { ReqRep, PubSub };
+
     public class SynapseProxy
     {
         SynapseEndpoint Listener;
         SynapseEndpoint Sender;
         public bool Debug { get; set; }
+        public ProxyType Type { get; protected set; }
 
-        public SynapseProxy(String[] listenOn, String[] sendOn, ZContext context = null)
+        public SynapseProxy(String[] listenOn, String[] sendOn, ZContext context = null, ProxyType type = ProxyType.ReqRep)
         {
             ZContext ctx = context;
             if (ctx == null)
                 ctx = new ZContext();
 
-            Listener = new SynapseEndpoint("ProxyListener", listenOn, ZSocketType.ROUTER, ctx);
-            Sender = new SynapseEndpoint("ProxySender", sendOn, ZSocketType.DEALER, ctx);
+            Type = type;
+            if (Type == ProxyType.ReqRep)
+            {
+                Listener = new SynapseEndpoint("ProxyListener", listenOn, ZSocketType.ROUTER, ctx);
+                Sender = new SynapseEndpoint("ProxySender", sendOn, ZSocketType.DEALER, ctx);
+            }
+            else
+            {
+                Listener = new SynapseEndpoint("ProxyListener", listenOn, ZSocketType.XSUB, ctx);
+                Sender = new SynapseEndpoint("ProxySender", sendOn, ZSocketType.XPUB, ctx);
+            }
+        }
+
+        private void init()
+        {
+            Debug = false;
+            Type = ProxyType.ReqRep;
         }
 
         public void Start()
@@ -29,6 +47,7 @@ namespace Synapse.MQ.ZeroMQ
             Listener.Bind();
             Sender.Bind();
             Console.WriteLine("Debug Mode : " + Debug);
+            Console.WriteLine("Proxy Type : " + Type);
 
             ZPollItem poll = ZPollItem.CreateReceiver();
             ZError error;

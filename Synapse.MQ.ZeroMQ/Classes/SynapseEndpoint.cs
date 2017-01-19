@@ -17,6 +17,7 @@ namespace Synapse.MQ.ZeroMQ
         public ZSocket Socket { get; }
         public ZSocketType SocketType { get; }
         public List<String> Endpoints { get; }
+        public String SubscribeTo { get; set; }
 
         public SynapseEndpoint(String name, String[] endpoints, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
         {
@@ -37,6 +38,10 @@ namespace Synapse.MQ.ZeroMQ
             foreach (String endpoint in Endpoints)
             {
                 Socket.Bind(endpoint);
+                if (String.IsNullOrWhiteSpace(SubscribeTo))
+                    Socket.SubscribeAll();
+                else
+                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Bound To " + endpoint);
             }
         }
@@ -52,6 +57,10 @@ namespace Synapse.MQ.ZeroMQ
             foreach (String endpoint in Endpoints)
             {
                 Socket.Connect(endpoint);
+                if (String.IsNullOrWhiteSpace(SubscribeTo))
+                    Socket.SubscribeAll();
+                else
+                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Connected To " + endpoint);
             }
         }
@@ -113,6 +122,25 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
+        public void SubscribeToMessages(Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
+        {
+            ZError error;
+            ZMessage request;
+            ISynapseEndpoint replyUsing = this;
+
+            while (true)
+            {
+                if (null == (request = Socket.ReceiveMessage(out error)))
+                {
+                    if (error == ZError.ETERM)
+                        return;
+                    throw new ZException(error);
+                }
+
+                new Thread(() => ProcessSubscribeMessage(request, callback, sendAck, replyUsing)).Start();
+            }
+        }
+
         internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
         {
             string identity = request[1].ReadString();
@@ -138,6 +166,29 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
+        internal void ProcessSubscribeMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
+        {
+            String identity = request[0].ReadString();
+            String xml = request[1].ReadString();
+
+            SynapseMessage message = SynapseMessage.GetInstance(xml);
+            message.ReceivedDate = DateTime.Now;
+
+            //TODO : Debug - Remove Me
+            Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+
+            if (sendAck && message.Type != MessageType.ACK)
+            {
+                replyUsing.SendMessage(message.GetAck());
+            }
+
+            if (callback != null)
+            {
+                ISynapseMessage reply = callback(message, replyUsing);
+                if (reply != null)
+                    replyUsing.SendMessage(reply);
+            }
+        }
 
 
         public void ReceiveReplies(Func<ISynapseMessage, String> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
