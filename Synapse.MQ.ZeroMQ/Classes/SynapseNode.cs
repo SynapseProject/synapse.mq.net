@@ -16,26 +16,22 @@ namespace Synapse.MQ.ZeroMQ
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessAcks { get; set; }
 
         private String[] InboundUrl = { @"tcp://localhost:5556" };
-        private String[] OutboundUrl = { @"tcp://localhost:5557" };
-        private String[] SubscribeUrl = { @"tcp://localhost:5560" }; 
+        private String[] OutboundUrl = { @"tcp://localhost:5555" };
 
         private SynapseEndpoint Inbound = null;
         private SynapseEndpoint Outbound = null;
-        private SynapseEndpoint Subscriber = null;
 
         private Thread requestPoller = null;
-        private Thread subscribePoller = null;
 
         public SynapseNode()
         {
             init();
         }
 
-        public SynapseNode(String[] inboundUrl, String[] outboundUrl, String[] subscribeUrl)
+        public SynapseNode(String[] inboundUrl, String[] outboundUrl)
         {
             InboundUrl = inboundUrl;
             OutboundUrl = outboundUrl;
-            SubscribeUrl = subscribeUrl;
 
             init();
         }
@@ -49,20 +45,14 @@ namespace Synapse.MQ.ZeroMQ
 
         public void Start()
         {
-            Outbound = new SynapseEndpoint("Node", OutboundUrl);
+            Outbound = new SynapseEndpoint("Node", OutboundUrl, ZSocketType.PUB);
             Outbound.Connect();
 
-            Inbound = new SynapseEndpoint("Node", InboundUrl);
+            Inbound = new SynapseEndpoint("Node", InboundUrl, ZSocketType.SUB);
             Inbound.Connect();
-
-            Subscriber = new SynapseEndpoint("Node", SubscribeUrl, ZSocketType.SUB);
-            Subscriber.Connect();
 
             requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, true, Outbound));
             requestPoller.Start();
-
-            subscribePoller = new Thread(() => Subscriber.ReceiveMessages(ProcessCancelPlanRequest, false, Outbound));
-            subscribePoller.Start();
         }
 
 

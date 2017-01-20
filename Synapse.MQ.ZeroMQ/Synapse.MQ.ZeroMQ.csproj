@@ -46,6 +46,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\SynapseBroker.cs" />
     <Compile Include="Classes\SynapseController.cs" />
     <Compile Include="Classes\SynapseMessage.cs" />
     <Compile Include="Classes\SynapseNode.cs" />

@@ -14,13 +14,11 @@ namespace Synapse.MQ.ZeroMQ
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessStatusUpdate { get; set; }
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessAcks { get; set; }
 
-        private String[] InboundUrl = { @"tcp://localhost:5558" };
+        private String[] InboundUrl = { @"tcp://localhost:5556" };
         private String[] OutboundUrl = { @"tcp://localhost:5555" };
-        private String[] PublishUrl = { @"tcp://localhost:5559" };
 
         private SynapseEndpoint Inbound = null;
         private SynapseEndpoint Outbound = null;
-        private SynapseEndpoint Publisher = null;
 
         private Thread requestPoller = null;
 
@@ -29,11 +27,10 @@ namespace Synapse.MQ.ZeroMQ
             init();
         }
 
-        public SynapseController(String[] inboundUrl, String[] outboundUrl, String[] publishUrl)
+        public SynapseController(String[] inboundUrl, String[] outboundUrl)
         {
             InboundUrl = inboundUrl;
             OutboundUrl = outboundUrl;
-            PublishUrl = publishUrl;
 
             init();
         }
@@ -46,14 +43,11 @@ namespace Synapse.MQ.ZeroMQ
 
         public void Start()
         {
-            Outbound = new SynapseEndpoint("Controller", OutboundUrl);
+            Outbound = new SynapseEndpoint("Controller", OutboundUrl, ZSocketType.PUB);
             Outbound.Connect();
 
-            Inbound = new SynapseEndpoint("Controller", InboundUrl);
+            Inbound = new SynapseEndpoint("Controller", InboundUrl, ZSocketType.SUB);
             Inbound.Connect();
-
-            Publisher = new SynapseEndpoint("Controller", PublishUrl, ZSocketType.PUB);
-            Publisher.Connect();
 
             requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, true, Outbound));
             requestPoller.Start();
@@ -82,13 +76,6 @@ namespace Synapse.MQ.ZeroMQ
         public Guid SendMessage(ISynapseMessage message)
         {
             Outbound.SendMessage(message);
-            return message.Id;
-        }
-
-        public Guid PublishMessage(ISynapseMessage message)
-        {
-//            Publish.PublishMessage(message);
-            Publisher.SendMessage(message);
             return message.Id;
         }
     }

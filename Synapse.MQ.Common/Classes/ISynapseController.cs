@@ -13,6 +13,5 @@ namespace Synapse.MQ
 
         // Outbound Actions
         Guid SendMessage(ISynapseMessage message);
-        Guid PublishMessage(ISynapseMessage message);
     }
 }

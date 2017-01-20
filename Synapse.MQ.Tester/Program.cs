@@ -27,21 +27,16 @@ namespace Synapse.MQ.Tester
                 if (args.Length > 3) { pubSubUrl = args[3].Split(','); }
                 if (args.Length > 4) { debugMode = bool.Parse(args[4]); }
 
-                if (mode == "PROXY")
+                if (mode == "BROKER")
                 {
-                    ProxyType type = (ProxyType)Enum.Parse(typeof(ProxyType), args[3]);
-                    SynapseProxy proxy = new SynapseProxy(inboundUrl, outboundUrl, null, type);
-                    Thread proxyThread = new Thread(() => proxy.Start());
-                    proxy.Debug = debugMode;
-                    proxyThread.Start();
-
-                    while (true) ;
+                    SynapseBroker broker = new SynapseBroker(inboundUrl, outboundUrl, true);
+                    broker.Start();
                 }
                 else if (mode == "CONTROLLER")
                 {
-                    SynapseController controller = new SynapseController(inboundUrl, outboundUrl, pubSubUrl);
-                    controller.ProcessAcks = ProcessAcksController;
-                    controller.ProcessStatusUpdate = ProcessStatusUpdateRequest;
+                    SynapseController controller = new SynapseController(inboundUrl, outboundUrl);
+//                    controller.ProcessAcks = ProcessAcksController;
+//                    controller.ProcessStatusUpdate = ProcessStatusUpdateRequest;
                     controller.Start();
 
                     int i = 0;
@@ -58,7 +53,7 @@ namespace Synapse.MQ.Tester
                         {
                             message.Type = MessageType.CANCELPLAN;
                             message.Body = inputStr.Substring(7);
-                            controller.PublishMessage(message);
+                            controller.SendMessage(message);
                         }
                         else
                         {
@@ -71,10 +66,10 @@ namespace Synapse.MQ.Tester
                 }
                 else if (mode == "NODE")
                 {
-                    SynapseNode node = new SynapseNode(inboundUrl, outboundUrl, pubSubUrl);
-                    node.ProcessAcks = ProcessAcksNode;
-                    node.ProcessExecutePlanRequest = ProcessExecutePlanRequest;
-                    node.ProcessCancelPlanRequest = ProcessCancelPlanRequest;
+                    SynapseNode node = new SynapseNode(inboundUrl, outboundUrl);
+//                    node.ProcessAcks = ProcessAcksNode;
+//                    node.ProcessExecutePlanRequest = ProcessExecutePlanRequest;
+//                    node.ProcessCancelPlanRequest = ProcessCancelPlanRequest;
                     node.Start();
                 }
             }

@@ -17,7 +17,6 @@ namespace Synapse.MQ.ZeroMQ
         public ZSocket Socket { get; }
         public ZSocketType SocketType { get; }
         public List<String> Endpoints { get; }
-        public String SubscribeTo { get; set; }
 
         public SynapseEndpoint(String name, String[] endpoints, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
         {
@@ -33,15 +32,31 @@ namespace Synapse.MQ.ZeroMQ
             Socket = new ZSocket(Context, SocketType);
         }
 
+        public void Subscribe(String prefix)
+        {
+            this.Socket.Subscribe(prefix);
+        }
+
+        public void SubscribeAll()
+        {
+            this.Socket.SubscribeAll();
+        }
+
+        public void Unsubscribe(String prefix)
+        {
+            this.Socket.Unsubscribe(prefix);
+        }
+
+        public void UnsubscribeAll()
+        {
+            this.Socket.UnsubscribeAll();
+        }
+
         internal void Bind()
         {
             foreach (String endpoint in Endpoints)
             {
                 Socket.Bind(endpoint);
-                if (String.IsNullOrWhiteSpace(SubscribeTo))
-                    Socket.SubscribeAll();
-                else
-                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Bound To " + endpoint);
             }
         }
@@ -57,10 +72,6 @@ namespace Synapse.MQ.ZeroMQ
             foreach (String endpoint in Endpoints)
             {
                 Socket.Connect(endpoint);
-                if (String.IsNullOrWhiteSpace(SubscribeTo))
-                    Socket.SubscribeAll();
-                else
-                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Connected To " + endpoint);
             }
         }
@@ -77,6 +88,7 @@ namespace Synapse.MQ.ZeroMQ
             using (ZMessage outgoing = new ZMessage())
             {
                 message.SentDate = DateTime.Now;
+                //TODO :  Build New Wire Message Format
                 outgoing.Add(new ZFrame(message.Serialize()));
                 Console.WriteLine("<<< [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
                 if (!Socket.Send(outgoing, out error))
@@ -116,12 +128,12 @@ namespace Synapse.MQ.ZeroMQ
         {
             int frameCount = request.Count;
 
+            //TODO :  Parse New Wire Message Format
             String xml = request[frameCount - 1].ReadString();
 
             SynapseMessage message = SynapseMessage.GetInstance(xml);
             message.ReceivedDate = DateTime.Now;
 
-            //TODO : Debug - Remove Me
             Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 
             if (sendAck && message.Type != MessageType.ACK)
