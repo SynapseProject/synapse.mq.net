@@ -17,6 +17,7 @@ namespace Synapse.MQ.ZeroMQ
         public ZSocket Socket { get; }
         public ZSocketType SocketType { get; }
         public List<String> Endpoints { get; }
+        public String SubscribeTo { get; set; }
 
         public SynapseEndpoint(String name, String[] endpoints, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
         {
@@ -37,6 +38,10 @@ namespace Synapse.MQ.ZeroMQ
             foreach (String endpoint in Endpoints)
             {
                 Socket.Bind(endpoint);
+                if (String.IsNullOrWhiteSpace(SubscribeTo))
+                    Socket.SubscribeAll();
+                else
+                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Bound To " + endpoint);
             }
         }
@@ -52,6 +57,10 @@ namespace Synapse.MQ.ZeroMQ
             foreach (String endpoint in Endpoints)
             {
                 Socket.Connect(endpoint);
+                if (String.IsNullOrWhiteSpace(SubscribeTo))
+                    Socket.SubscribeAll();
+                else
+                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Connected To " + endpoint);
             }
         }
@@ -115,10 +124,12 @@ namespace Synapse.MQ.ZeroMQ
 
         internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
         {
-            string identity = request[1].ReadString();
-            String xml = request[2].ReadString();
+            int frameCount = request.Count;
 
-            //TODO : Build Me
+            // Last 2 Frames Are Identity and Xml.  ReqRep Proxy Adds Frames  While PubSub Doesn't.
+            string identity = request[frameCount - 2].ReadString();
+            String xml = request[frameCount - 1].ReadString();
+
             SynapseMessage message = SynapseMessage.GetInstance(xml);
             message.ReceivedDate = DateTime.Now;
 
@@ -137,8 +148,6 @@ namespace Synapse.MQ.ZeroMQ
                     replyUsing.SendMessage(reply);
             }
         }
-
-
 
         public void ReceiveReplies(Func<ISynapseMessage, String> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
         {

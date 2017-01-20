@@ -8,25 +8,46 @@ using ZeroMQ;
 
 namespace Synapse.MQ.ZeroMQ
 {
+    public enum ProxyType { ReqRep, PubSub };
+
     public class SynapseProxy
     {
         SynapseEndpoint Listener;
         SynapseEndpoint Sender;
+        public bool Debug { get; set; }
+        public ProxyType Type { get; protected set; }
 
-        public SynapseProxy(String[] listenOn, String[] sendOn, ZContext context = null)
+        public SynapseProxy(String[] listenOn, String[] sendOn, ZContext context = null, ProxyType type = ProxyType.ReqRep)
         {
             ZContext ctx = context;
             if (ctx == null)
                 ctx = new ZContext();
 
-            Listener = new SynapseEndpoint("ProxyListener", listenOn, ZSocketType.ROUTER, ctx);
-            Sender = new SynapseEndpoint("ProxySender", sendOn, ZSocketType.DEALER, ctx);
+            Type = type;
+            if (Type == ProxyType.ReqRep)
+            {
+                Listener = new SynapseEndpoint("ProxyListener", listenOn, ZSocketType.ROUTER, ctx);
+                Sender = new SynapseEndpoint("ProxySender", sendOn, ZSocketType.DEALER, ctx);
+            }
+            else
+            {
+                Listener = new SynapseEndpoint("ProxyListener", listenOn, ZSocketType.XSUB, ctx);
+                Sender = new SynapseEndpoint("ProxySender", sendOn, ZSocketType.XPUB, ctx);
+            }
+        }
+
+        private void init()
+        {
+            Debug = false;
+            Type = ProxyType.ReqRep;
         }
 
         public void Start()
         {
             Listener.Bind();
             Sender.Bind();
+            Console.WriteLine("Debug Mode : " + Debug);
+            Console.WriteLine("Proxy Type : " + Type);
 
             ZPollItem poll = ZPollItem.CreateReceiver();
             ZError error;
@@ -36,7 +57,8 @@ namespace Synapse.MQ.ZeroMQ
             {
                 if (Listener.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
                 {
-                    WriteMessage(message);
+                    if (Debug)
+                        ZeroMQUtils.WriteRawMessage(message);
                     Sender.Socket.Send(message);
                 }
                 else
@@ -49,7 +71,8 @@ namespace Synapse.MQ.ZeroMQ
 
                 if (Sender.Socket.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
                 {
-                    WriteMessage(message);
+                    if (Debug)
+                        ZeroMQUtils.WriteRawMessage(message);
                     Listener.Socket.Send(message);
                 }
                 else
@@ -70,14 +93,6 @@ namespace Synapse.MQ.ZeroMQ
                             throw new ZException(error);
                         } 
 */
-        }
-
-        public static void WriteMessage(ZMessage message)
-        {
-            Console.Write(">> ");
-            for (int i=0; i<message.Count; i++)
-                Console.Write("[" + message[i].ReadString() + "]");
-            Console.WriteLine();
         }
     }
 }
