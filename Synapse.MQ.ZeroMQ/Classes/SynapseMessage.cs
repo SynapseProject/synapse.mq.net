@@ -23,6 +23,15 @@ namespace Synapse.MQ.ZeroMQ
         public String Body { get; set; }
 
         [XmlElement]
+        public String Target { get; set; }
+        [XmlElement]
+        public String TargetGroup { get; set; }
+        [XmlElement]
+        public String SenderId { get; set; }
+        [XmlElement]
+        public bool AckRequested { get; set; }
+
+        [XmlElement]
         public DateTime CreationDate { get; set; }
         [XmlElement]
         public DateTime SentDate { get; set; }
@@ -71,6 +80,9 @@ namespace Synapse.MQ.ZeroMQ
             ackMessage.Type = MessageType.ACK;
             ackMessage.TrackingId = this.TrackingId;
             ackMessage.SequenceNumber = 1;
+            ackMessage.SenderId = this.SenderId;
+            ackMessage.Target = this.Target + ".ACK";
+            ackMessage.TargetGroup = this.TargetGroup;
             return ackMessage;
         }
     }

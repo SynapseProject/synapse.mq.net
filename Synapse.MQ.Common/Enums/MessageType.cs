@@ -9,6 +9,8 @@ namespace Synapse.MQ
         EXECUTEPLAN,
         STATUS,
         CANCELPLAN,
-        ACK
+        ACK,
+        ADMIN,
+        REPLY
     }
 }

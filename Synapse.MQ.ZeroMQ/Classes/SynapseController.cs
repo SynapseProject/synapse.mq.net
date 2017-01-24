@@ -11,6 +11,9 @@ namespace Synapse.MQ.ZeroMQ
 {
     public class SynapseController : ISynapseController
     {
+        public String Id { get; set; }
+        public String GroupId { get; set; }
+
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessStatusUpdate { get; set; }
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessAcks { get; set; }
 
@@ -29,16 +32,17 @@ namespace Synapse.MQ.ZeroMQ
 
         public SynapseController(String[] inboundUrl, String[] outboundUrl)
         {
+            init();
             InboundUrl = inboundUrl;
             OutboundUrl = outboundUrl;
-
-            init();
         }
 
         private void init()
         {
             ProcessStatusUpdate = null;
             ProcessAcks = null;
+            Id = Guid.NewGuid().ToString();
+            GroupId = String.Empty;
         }
 
         public void Start()
@@ -47,10 +51,13 @@ namespace Synapse.MQ.ZeroMQ
             Outbound.Connect();
 
             Inbound = new SynapseEndpoint("Controller", InboundUrl, ZSocketType.SUB);
+            Subscribe();
             Inbound.Connect();
 
-            requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, true, Outbound));
+            requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, Outbound));
             requestPoller.Start();
+
+            Register();
         }
 
         private ISynapseMessage ProcessInbound(ISynapseMessage message, ISynapseEndpoint replyOn)
@@ -66,8 +73,6 @@ namespace Synapse.MQ.ZeroMQ
                     if (this.ProcessAcks != null)
                         reply = (SynapseMessage)ProcessAcks(message, replyOn);
                     break;
-                default:
-                    throw new Exception("Unknown MessageType [" + message.Type + "] Received.");
             }
 
             return reply;
@@ -77,6 +82,43 @@ namespace Synapse.MQ.ZeroMQ
         {
             Outbound.SendMessage(message);
             return message.Id;
+        }
+
+        public void Register()
+        {
+            SynapseMessage message = SynapseEndpoint.GetRegisterMessage(GroupId, Id, "REGISTER_CONTROLLER");
+            this.SendMessage(message);
+        }
+
+        public void Unregister()
+        {
+            SynapseMessage message = SynapseEndpoint.GetRegisterMessage(GroupId, Id, "UNREGISTER_CONTROLLER");
+            this.SendMessage(message);
+        }
+
+        private String[] GetQueueNames()
+        {
+            List<String> queues = new List<string>();
+
+            queues.Add(Id + "." + GroupId + "." + "STATUS.SYNAPSE");            // Status update messages.
+            queues.Add(Id + "." + GroupId + "." + "EXECUTEPLAN.ACK.SYNAPSE");   // ACK messages from ExecutePlan requests.
+            queues.Add(Id + "." + GroupId + "." + "ADMIN.ACK.SYNAPSE");         // ACK messages from admin requests.
+
+            return queues.ToArray();
+        }
+
+        public void Subscribe()
+        {
+            String[] queues = GetQueueNames();
+            foreach (String queue in queues)
+                Inbound.Subscribe(queue);
+        }
+
+        public void Unsubscribe()
+        {
+            String[] queues = GetQueueNames();
+            foreach (String queue in queues)
+                Inbound.Unsubscribe(queue);
         }
     }
 }

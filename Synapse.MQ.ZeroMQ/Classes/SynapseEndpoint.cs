@@ -88,9 +88,9 @@ namespace Synapse.MQ.ZeroMQ
             using (ZMessage outgoing = new ZMessage())
             {
                 message.SentDate = DateTime.Now;
-                //TODO :  Build New Wire Message Format
                 outgoing.Add(new ZFrame(message.Serialize()));
                 Console.WriteLine("<<< [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+                ZeroMQUtils.WriteRawMessage(outgoing);
                 if (!Socket.Send(outgoing, out error))
                 {
                     if (error == ZError.ETERM)
@@ -101,7 +101,7 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        public void ReceiveMessages(Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
+        public void ReceiveMessages(Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, ISynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage request;
@@ -119,16 +119,16 @@ namespace Synapse.MQ.ZeroMQ
                     throw new ZException(error);
                 }
 
-                new Thread(() => ProcessMessage(request, callback, sendAck, replyUsing)).Start();
+                new Thread(() => ProcessMessage(request, callback, replyUsing)).Start();
 
             }
         }
 
-        internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
+        internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, ISynapseEndpoint replyUsing)
         {
             int frameCount = request.Count;
 
-            //TODO :  Parse New Wire Message Format
+            String destination = request[frameCount - 2].ReadString();
             String xml = request[frameCount - 1].ReadString();
 
             SynapseMessage message = SynapseMessage.GetInstance(xml);
@@ -136,7 +136,7 @@ namespace Synapse.MQ.ZeroMQ
 
             Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 
-            if (sendAck && message.Type != MessageType.ACK)
+            if (message.AckRequested)
             {
                 replyUsing.SendMessage(message.GetAck());
             }
@@ -147,6 +147,18 @@ namespace Synapse.MQ.ZeroMQ
                 if (reply != null)
                     replyUsing.SendMessage(reply);
             }
+        }
+
+        public static SynapseMessage GetRegisterMessage(String groupId, String uniqueId, String queueName)
+        {
+            SynapseMessage message = new SynapseMessage();
+            message.Type = MessageType.ADMIN;
+            message.SenderId = uniqueId;
+            message.Target = queueName;
+            message.TargetGroup = groupId;
+            message.AckRequested = true;
+
+            return message;
         }
     }
 }
