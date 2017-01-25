@@ -6,6 +6,10 @@ namespace Synapse.MQ
 {
     public interface ISynapseNode
     {
+        // Node Functions
+        void Start();
+        void Stop();
+
         // Inbound Message Processing Functions
         // Function implementations should return a SynapseMessage if a reply is to be sent, or NULL if not.
         Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessExecutePlanRequest { get; set; }

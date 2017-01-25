@@ -44,23 +44,30 @@ namespace Synapse.MQ.ZeroMQ
             ProcessAcks = null;
             Id = Guid.NewGuid().ToString();
             GroupId = String.Empty;
-        }
 
-        public void Start()
-        {
             Outbound = new SynapseEndpoint("Controller", OutboundUrl, ZSocketType.PUB);
             Outbound.Debug = Debug;
             Outbound.Connect();
 
             Inbound = new SynapseEndpoint("Controller", InboundUrl, ZSocketType.SUB);
             Inbound.Debug = Debug;
-            Subscribe();
             Inbound.Connect();
 
             requestPoller = new Thread(() => Inbound.ReceiveMessages(ProcessInbound, Outbound));
             requestPoller.Start();
 
+        }
+
+        public void Start()
+        {
+            Subscribe();
             Register();
+        }
+
+        public void Stop()
+        {
+            Unregister();
+            Unsubscribe();
         }
 
         private ISynapseMessage ProcessInbound(ISynapseMessage message, ISynapseEndpoint replyOn)

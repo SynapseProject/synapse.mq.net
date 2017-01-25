@@ -67,8 +67,16 @@ namespace Synapse.MQ.Tester
                         }
                         else if (inputStr.ToUpper().StartsWith("EXIT"))
                         {
-                            controller.Unregister();
+                            controller.Stop();
                             Environment.Exit(0);
+                        }
+                        else if (inputStr.ToUpper().StartsWith("START"))
+                        {
+                            controller.Start();
+                        }
+                        else if (inputStr.ToUpper().StartsWith("STOP"))
+                        {
+                            controller.Stop();
                         }
                         else
                         {
@@ -100,8 +108,16 @@ namespace Synapse.MQ.Tester
                         i++;
                         if (inputStr.ToUpper().StartsWith("EXIT"))
                         {
-                            node.Unregister();
+                            node.Stop();
                             Environment.Exit(0);
+                        }
+                        else if (inputStr.ToUpper().StartsWith("START"))
+                        {
+                            node.Start();
+                        }
+                        else if (inputStr.ToUpper().StartsWith("STOP"))
+                        {
+                            node.Stop();
                         }
 
                     }
