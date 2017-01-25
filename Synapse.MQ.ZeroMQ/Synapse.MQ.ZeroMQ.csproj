@@ -46,11 +46,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\SynapseBroker.cs" />
     <Compile Include="Classes\SynapseController.cs" />
     <Compile Include="Classes\SynapseMessage.cs" />
     <Compile Include="Classes\SynapseNode.cs" />
     <Compile Include="Classes\SynapseEndpoint.cs" />
-    <Compile Include="Classes\SynapseProxy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\XmlUtils.cs" />
     <Compile Include="Utils\ZeroMQUtils.cs" />

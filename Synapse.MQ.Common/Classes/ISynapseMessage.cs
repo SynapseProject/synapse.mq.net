@@ -13,6 +13,11 @@ namespace Synapse.MQ
         MessageType Type { get; set; }
         String Body { get; set; }
 
+        String Target { get; set; }
+        String TargetGroup { get; set; }
+        String SenderId { get; set; }
+        bool AckRequested { get; set; }
+
         DateTime CreationDate { get; set; }
         DateTime SentDate { get; set; }
         DateTime ReceivedDate { get; set; }

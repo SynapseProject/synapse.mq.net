@@ -17,7 +17,7 @@ namespace Synapse.MQ.ZeroMQ
         public ZSocket Socket { get; }
         public ZSocketType SocketType { get; }
         public List<String> Endpoints { get; }
-        public String SubscribeTo { get; set; }
+        public bool Debug { get; set; }
 
         public SynapseEndpoint(String name, String[] endpoints, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
         {
@@ -33,15 +33,31 @@ namespace Synapse.MQ.ZeroMQ
             Socket = new ZSocket(Context, SocketType);
         }
 
+        public void Subscribe(String prefix)
+        {
+            this.Socket.Subscribe(prefix);
+        }
+
+        public void SubscribeAll()
+        {
+            this.Socket.SubscribeAll();
+        }
+
+        public void Unsubscribe(String prefix)
+        {
+            this.Socket.Unsubscribe(prefix);
+        }
+
+        public void UnsubscribeAll()
+        {
+            this.Socket.UnsubscribeAll();
+        }
+
         internal void Bind()
         {
             foreach (String endpoint in Endpoints)
             {
                 Socket.Bind(endpoint);
-                if (String.IsNullOrWhiteSpace(SubscribeTo))
-                    Socket.SubscribeAll();
-                else
-                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Bound To " + endpoint);
             }
         }
@@ -57,10 +73,6 @@ namespace Synapse.MQ.ZeroMQ
             foreach (String endpoint in Endpoints)
             {
                 Socket.Connect(endpoint);
-                if (String.IsNullOrWhiteSpace(SubscribeTo))
-                    Socket.SubscribeAll();
-                else
-                    Socket.Subscribe(SubscribeTo);
                 Console.WriteLine(SocketType + " Socket Connected To " + endpoint);
             }
         }
@@ -73,22 +85,13 @@ namespace Synapse.MQ.ZeroMQ
 
         public void SendMessage(ISynapseMessage message)
         {
-            SendMessage(message, null);
-        }
-
-        internal void SendMessage(ISynapseMessage message, String identity = null)
-        {
             ZError error;
             using (ZMessage outgoing = new ZMessage())
             {
-                if (String.IsNullOrWhiteSpace(identity))
-                    outgoing.Add(new ZFrame(Socket.Identity));
-                else
-                    outgoing.Add(new ZFrame(Encoding.UTF8.GetBytes(identity)));
-
                 message.SentDate = DateTime.Now;
                 outgoing.Add(new ZFrame(message.Serialize()));
-                Console.WriteLine("<<< [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
+                if (Debug)
+                    ZeroMQUtils.WriteRawMessage(outgoing);
                 if (!Socket.Send(outgoing, out error))
                 {
                     if (error == ZError.ETERM)
@@ -99,7 +102,7 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        public void ReceiveMessages(Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
+        public void ReceiveMessages(Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, ISynapseEndpoint replyOn = null)
         {
             ZError error;
             ZMessage request;
@@ -117,26 +120,25 @@ namespace Synapse.MQ.ZeroMQ
                     throw new ZException(error);
                 }
 
-                new Thread(() => ProcessMessage(request, callback, sendAck, replyUsing)).Start();
+                new Thread(() => ProcessMessage(request, callback, replyUsing)).Start();
 
             }
         }
 
-        internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
+        internal void ProcessMessage(ZMessage request, Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> callback, ISynapseEndpoint replyUsing)
         {
             int frameCount = request.Count;
 
-            // Last 2 Frames Are Identity and Xml.  ReqRep Proxy Adds Frames  While PubSub Doesn't.
-            string identity = request[frameCount - 2].ReadString();
+            if (Debug)
+                ZeroMQUtils.WriteRawMessage(request);
+
+            String destination = request[frameCount - 2].ReadString();
             String xml = request[frameCount - 1].ReadString();
 
             SynapseMessage message = SynapseMessage.GetInstance(xml);
             message.ReceivedDate = DateTime.Now;
 
-            //TODO : Debug - Remove Me
-            Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
-
-            if (sendAck && message.Type != MessageType.ACK)
+            if (message.AckRequested)
             {
                 replyUsing.SendMessage(message.GetAck());
             }
@@ -149,51 +151,16 @@ namespace Synapse.MQ.ZeroMQ
             }
         }
 
-        public void ReceiveReplies(Func<ISynapseMessage, String> callback, Boolean sendAck = false, ISynapseEndpoint replyOn = null)
+        public static SynapseMessage GetRegisterMessage(String groupId, String uniqueId, String queueName)
         {
-            ZError error;
-            ZMessage incoming;
-            ZPollItem poll = ZPollItem.CreateReceiver();
-            ISynapseEndpoint replyUsing = this;
+            SynapseMessage message = new SynapseMessage();
+            message.Type = MessageType.ADMIN;
+            message.SenderId = uniqueId;
+            message.Target = queueName;
+            message.TargetGroup = groupId;
+            message.AckRequested = true;
 
-            if (replyOn != null)
-                replyUsing = replyOn;
-
-            while (true)
-            {
-                if (!Socket.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(10)))
-                {
-                    if (error == ZError.EAGAIN)
-                    {
-                        Thread.Sleep(1000);
-                        continue;
-                    }
-                    if (error == ZError.ETERM)
-                        return;
-                    throw new ZException(error);
-                }
-
-                new Thread(() => ProcessReply(incoming, callback, sendAck, replyUsing)).Start();
-
-            }
+            return message;
         }
-
-        internal void ProcessReply(ZMessage incoming, Func<ISynapseMessage, String> callback, Boolean sendAck, ISynapseEndpoint replyUsing)
-        {
-            String xml = incoming[0].ReadString();
-
-            SynapseMessage message = SynapseMessage.GetInstance(xml);
-
-            Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
-
-            if (sendAck && message.Type != MessageType.ACK)
-            {
-                replyUsing.SendMessage(message.GetAck());
-            }
-
-            if (callback != null)
-                callback(message);
-        }
-
     }
 }
