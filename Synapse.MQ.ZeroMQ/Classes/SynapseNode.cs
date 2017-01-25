@@ -13,6 +13,7 @@ namespace Synapse.MQ.ZeroMQ
     {
         public String Id { get; set; }
         public String GroupId { get; set; }
+        public bool Debug { get; set; }
 
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessExecutePlanRequest { get; set; }
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessCancelPlanRequest { get; set; }
@@ -60,9 +61,11 @@ namespace Synapse.MQ.ZeroMQ
         public void Start()
         {
             Outbound = new SynapseEndpoint("Node-Outbound", OutboundUrl, ZSocketType.PUB);
+            Outbound.Debug = Debug;
             Outbound.Connect();
 
             Inbound = new SynapseEndpoint("Node-Inbound", InboundUrl, ZSocketType.SUB);
+            Inbound.Debug = Debug;
             Subscribe();
             Inbound.Connect();
 

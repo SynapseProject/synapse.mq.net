@@ -11,6 +11,7 @@ using ZeroMQ;
 namespace Synapse.MQ.ZeroMQ
 {
     public enum BrokerType { NONE, BROADCAST, ROUNDROBIN, ORDERED, ADMIN, REPLY }
+    enum ClientType { CONTROLLER, NODE }
 
     public class SynapseBroker
     {
@@ -21,8 +22,7 @@ namespace Synapse.MQ.ZeroMQ
 
         public bool Debug { get; set; }
 
-        private Dictionary<String, String> registeredControllers = new Dictionary<string, string>();
-        private Dictionary<String, String> registeredNodes = new Dictionary<string, string>();
+        private Dictionary<String, Dictionary<String, List<String>>> clients = new Dictionary<string, Dictionary<String, List<String>>>();
 
         public SynapseBroker(String[] inboundUrl, String[] outboundUrl, bool debug = false)
         {
@@ -31,8 +31,11 @@ namespace Synapse.MQ.ZeroMQ
             OutboundUrl = outboundUrl;
             Debug = debug;
 
-            Listener = new SynapseEndpoint("BrokerListener", InboundUrl, ZSocketType.SUB, ctx);
-            Sender = new SynapseEndpoint("BrokerSender", OutboundUrl, ZSocketType.PUB, ctx);
+            clients.Add(ClientType.CONTROLLER.ToString(), new Dictionary<string, List<string>>());
+            clients.Add(ClientType.NODE.ToString(), new Dictionary<string, List<string>>());
+
+            Listener = new SynapseEndpoint("BrokerInbound", InboundUrl, ZSocketType.SUB, ctx);
+            Sender = new SynapseEndpoint("BrokerOutbound", OutboundUrl, ZSocketType.PUB, ctx);
         }
 
         public void Start()
@@ -93,22 +96,22 @@ namespace Synapse.MQ.ZeroMQ
 
                 if (sMessage.Target == "REGISTER_CONTROLLER")
                 {
-                    registeredControllers.Add(key, value);
+                    AddClient(ClientType.CONTROLLER, sMessage.TargetGroup, sMessage.SenderId);
                     Console.WriteLine("*** Controller [" + sMessage.SenderId + "] In Group [" + sMessage.TargetGroup + "] Has Been Registered.");
                 }
                 else if (sMessage.Target == "REGISTER_NODE")
                 {
-                    registeredNodes.Add(key, value);
+                    AddClient(ClientType.NODE, sMessage.TargetGroup, sMessage.SenderId);
                     Console.WriteLine("*** Node [" + sMessage.SenderId + "] In Group [" + sMessage.TargetGroup + "] Has Been Registered.");
                 }
                 else if (sMessage.Target == "UNREGISTER_CONTROLLER")
                 {
-                    registeredControllers.Remove(key);
+                    RemoveClient(ClientType.CONTROLLER, sMessage.TargetGroup, sMessage.SenderId);
                     Console.WriteLine("*** Controller [" + sMessage.SenderId + "] In Group [" + sMessage.TargetGroup + "] Has Been Unregistered.");
                 }
                 else if (sMessage.Target == "UNREGISTER_NODE")
                 {
-                    registeredNodes.Remove(key);
+                    RemoveClient(ClientType.NODE, sMessage.TargetGroup, sMessage.SenderId);
                     Console.WriteLine("*** Node [" + sMessage.SenderId + "] In Group [" + sMessage.TargetGroup + "] Has Been Unregistered.");
                 }
 
@@ -123,10 +126,7 @@ namespace Synapse.MQ.ZeroMQ
             outbound.Add(new ZFrame(GetDestination(sMessage)));
             outbound.Add(new ZFrame(sMessage.Serialize()));
             if (Debug == true)
-            {
-                Console.WriteLine("<<< Sending Wire Message : " + DateTime.Now);
                 ZeroMQUtils.WriteRawMessage(outbound);
-            }
 
             endpoint.Socket.Send(outbound);
 
@@ -145,13 +145,15 @@ namespace Synapse.MQ.ZeroMQ
                 switch (message.Target)
                 {
                     case "EXECUTEPLAN":
-                        registeredNodes.TryGetValue(key, out sendTo);
+                    case "STATUS.ACK":
+                        sendTo = GetClient(ClientType.NODE, BrokerType.ORDERED, message.TargetGroup);
                         break;
                     case "CANCELPLAN":
                         sendTo = message.TargetGroup;
                         break;
                     case "STATUS":
-                        registeredControllers.TryGetValue(key, out sendTo);
+                    case "EXECUTEPLAN.ACK":
+                        sendTo = GetClient(ClientType.CONTROLLER, BrokerType.ORDERED, message.TargetGroup);
                         break;
                     default:
                         sendTo = message.SenderId + "." + message.TargetGroup;
@@ -159,13 +161,53 @@ namespace Synapse.MQ.ZeroMQ
                 }
                 sb.Append(sendTo + ".");
             }
-
             sb.Append(message.Target + ".");
             sb.Append("SYNAPSE");
 
-            Console.WriteLine("+++++ Destination : " + sb.ToString() + " +++++");
-
             return sb.ToString();
+        }
+
+        private void AddClient(ClientType clientType, String groupId, String clientId)
+        {
+            Dictionary<String, List<String>> type = clients[clientType.ToString()];
+
+            if (!type.ContainsKey(groupId))
+                type.Add(groupId, new List<string>());
+
+            if (!type[groupId].Contains(clientId))
+                type[groupId].Add(clientId);
+        }
+
+        private void RemoveClient(ClientType clientType, String groupId, String clientId)
+        {
+            Dictionary<String, List<String>> type = clients[clientType.ToString()];
+
+            if (type.ContainsKey(groupId))
+                if (type[groupId].Contains(clientId))
+                    type[groupId].Remove(clientId);
+        }
+
+        private List<String> GetClients(ClientType clientType, String groupId)
+        {
+            Dictionary<String, List<String>> type = clients[clientType.ToString()];
+
+            if (type.ContainsKey(groupId))
+                return type[groupId];
+            else
+                return null;
+        }
+
+        private String GetClient(ClientType clientType, BrokerType brokerType, String groupId)
+        {
+            String clientId = null;
+            List<String> clients = GetClients(clientType, groupId);
+
+            if (clients.Count > 0)
+            {
+                clientId = clients.ElementAt<String>(0) + "." + groupId;
+            }
+
+            return clientId;
         }
     }
 }

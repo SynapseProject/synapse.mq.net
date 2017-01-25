@@ -13,6 +13,7 @@ namespace Synapse.MQ.ZeroMQ
     {
         public String Id { get; set; }
         public String GroupId { get; set; }
+        public bool Debug { get; set; }
 
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessStatusUpdate { get; set; }
         public Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessAcks { get; set; }
@@ -48,9 +49,11 @@ namespace Synapse.MQ.ZeroMQ
         public void Start()
         {
             Outbound = new SynapseEndpoint("Controller", OutboundUrl, ZSocketType.PUB);
+            Outbound.Debug = Debug;
             Outbound.Connect();
 
             Inbound = new SynapseEndpoint("Controller", InboundUrl, ZSocketType.SUB);
+            Inbound.Debug = Debug;
             Subscribe();
             Inbound.Connect();
 

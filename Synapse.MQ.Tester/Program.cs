@@ -14,16 +14,20 @@ namespace Synapse.MQ.Tester
     {
         static void Main(string[] args)
         {
-            String[] inboundUrl = { @"tcp://localhost:5555" };
-            String[] outboundUrl = { @"tcp://localhost:5556" };
+            String name = Guid.NewGuid().ToString();
+            String group = String.Empty;
+            String[] inboundUrl = { @"tcp://localhost:5556" };
+            String[] outboundUrl = { @"tcp://localhost:5555" };
             bool debugMode = false;
 
             if (args.Length > 0)
             {
                 String mode = args[0].ToUpper();
-                if (args.Length > 1) { inboundUrl = args[1].Split(','); }
-                if (args.Length > 2) { outboundUrl = args[2].Split(','); }
-                if (args.Length > 3) { debugMode = bool.Parse(args[3]); }
+                if (args.Length > 1) { name = args[1]; }
+                if (args.Length > 2) { group = args[2]; }
+                if (args.Length > 3) { inboundUrl = args[3].Split(','); }
+                if (args.Length > 4) { outboundUrl = args[4].Split(','); }
+                if (args.Length > 5) { debugMode = bool.Parse(args[5]); }
 
                 if (mode == "BROKER")
                 {
@@ -35,7 +39,9 @@ namespace Synapse.MQ.Tester
                     SynapseController controller = new SynapseController(inboundUrl, outboundUrl);
                     controller.ProcessAcks = ProcessAcksController;
                     controller.ProcessStatusUpdate = ProcessStatusUpdateRequest;
-                    controller.Id = "Test-Controller";
+                    controller.Id = name;
+                    controller.GroupId = group;
+                    controller.Debug = debugMode;
                     controller.Start();
 
                     int i = 0;
@@ -59,6 +65,11 @@ namespace Synapse.MQ.Tester
                             message.AckRequested = false;
                             controller.SendMessage(message);
                         }
+                        else if (inputStr.ToUpper().StartsWith("EXIT"))
+                        {
+                            controller.Unregister();
+                            Environment.Exit(0);
+                        }
                         else
                         {
                             message.Type = MessageType.EXECUTEPLAN;
@@ -76,9 +87,24 @@ namespace Synapse.MQ.Tester
                     node.ProcessAcks = ProcessAcksNode;
                     node.ProcessExecutePlanRequest = ProcessExecutePlanRequest;
                     node.ProcessCancelPlanRequest = ProcessCancelPlanRequest;
-                    node.Id = "Test-Node";
+                    node.Id = name;
+                    node.GroupId = group;
+                    node.Debug = debugMode;
                     node.Start();
 
+                    int i = 0;
+                    String inputStr = String.Empty;
+                    while (true)
+                    {
+                        inputStr = Console.ReadLine().Trim();
+                        i++;
+                        if (inputStr.ToUpper().StartsWith("EXIT"))
+                        {
+                            node.Unregister();
+                            Environment.Exit(0);
+                        }
+
+                    }
                 }
             }
             else
@@ -87,11 +113,13 @@ namespace Synapse.MQ.Tester
 
         static void Usage()
         {
-            Console.WriteLine("Usage : Synapse.MQ.Tester.exe MODE [INBOUND_URL(S)] [OUTBOUND_URL(S)]  [DEBUG_FLAG]");
+            Console.WriteLine("Usage : Synapse.MQ.Tester.exe MODE [NAME] [GROUP] [INBOUND_URL(S)] [OUTBOUND_URL(S)]  [DEBUG_FLAG]");
             Console.WriteLine("        - MODE       : Tells Program How To Act (See Details Below)");
             Console.WriteLine("             = BROKER     : Used for Many to Many Messaging in ZeroMQ.  Forwards Messages on InboundUrl to OutboundUrl.");
             Console.WriteLine("             = CONTROLLER : Sends Plan Start, Receives Status Update, Send Plan Cancel.");
             Console.WriteLine("             = NODE       : Receives Plan Start, Sends Status Update, Receives Plan Cancel.");
+            Console.WriteLine("        - NAME       : Unique Name Identifying Synapse Object");
+            Console.WriteLine("        - GROUP      : Group Id For Directed Messaging.");
             Console.WriteLine("        - URL(S)     : Comma Separated List of ZSocket Endpoints.");
             Console.WriteLine("        - DEBUG_FLAG : Puts Synapse Object Into Debug Mode (True/False)");
         }
@@ -118,7 +146,7 @@ namespace Synapse.MQ.Tester
             Console.WriteLine("*** SynapseNode : ProcessExecutePlanRequests ***");
             Console.WriteLine(message);
             Console.WriteLine("************************************************");
-/*
+
             for (int i=0; i<message.Body.Length; i++)
             {
                 Thread.Sleep(3000);
@@ -126,16 +154,16 @@ namespace Synapse.MQ.Tester
                 status.Type = MessageType.STATUS;
                 status.TrackingId = message.TrackingId;
                 status.TargetGroup = message.TargetGroup;
-                status.Target = "STATUS.ACK";
-                status.SenderId = "Test-ProgramSendStatus";
+                status.Target = "STATUS";
+                status.SenderId = "ProcessExecutePlanRequest-SendStatus";
                 status.SequenceNumber = i+1;
+                status.AckRequested = true;
                 status.Body = message.Body.Substring(0, (i+1)).ToUpper();
 
-                //TODO : Bring Forward Group Name and Requestor Id
                 if (endpoint != null)
                     endpoint.SendMessage(status);
             }
-*/
+
             return null;
         }
 

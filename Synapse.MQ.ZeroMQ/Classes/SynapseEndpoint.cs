@@ -17,6 +17,7 @@ namespace Synapse.MQ.ZeroMQ
         public ZSocket Socket { get; }
         public ZSocketType SocketType { get; }
         public List<String> Endpoints { get; }
+        public bool Debug { get; set; }
 
         public SynapseEndpoint(String name, String[] endpoints, ZSocketType socketType = ZSocketType.DEALER, ZContext context = null)
         {
@@ -89,8 +90,8 @@ namespace Synapse.MQ.ZeroMQ
             {
                 message.SentDate = DateTime.Now;
                 outgoing.Add(new ZFrame(message.Serialize()));
-                Console.WriteLine("<<< [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
-                ZeroMQUtils.WriteRawMessage(outgoing);
+                if (Debug)
+                    ZeroMQUtils.WriteRawMessage(outgoing);
                 if (!Socket.Send(outgoing, out error))
                 {
                     if (error == ZError.ETERM)
@@ -128,13 +129,14 @@ namespace Synapse.MQ.ZeroMQ
         {
             int frameCount = request.Count;
 
+            if (Debug)
+                ZeroMQUtils.WriteRawMessage(request);
+
             String destination = request[frameCount - 2].ReadString();
             String xml = request[frameCount - 1].ReadString();
 
             SynapseMessage message = SynapseMessage.GetInstance(xml);
             message.ReceivedDate = DateTime.Now;
-
-            Console.WriteLine(">>> [" + this.Name + "][" + message.Id + "][" + message.TrackingId + "][" + message.Type + "] " + message.Body);
 
             if (message.AckRequested)
             {
