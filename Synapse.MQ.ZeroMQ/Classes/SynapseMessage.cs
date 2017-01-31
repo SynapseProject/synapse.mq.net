@@ -129,7 +129,7 @@ namespace Synapse.MQ.ZeroMQ
             return message;
         }
 
-        public static SynapseMessage GetSendStatusMessage(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = true)
+        public static SynapseMessage GetSendPlanStatusMessage(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = true)
         {
             SynapseMessage message = new SynapseMessage();
 

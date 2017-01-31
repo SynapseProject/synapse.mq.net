@@ -104,9 +104,9 @@ namespace Synapse.MQ.ZeroMQ
             return reply;
         }
 
-        public Guid SendStatus(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = true, ISynapseEndpoint endpoint = null)
+        public Guid SendPlanStatus(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = true, ISynapseEndpoint endpoint = null)
         {
-            SynapseMessage message = SynapseMessage.GetSendStatusMessage(body, targetGroup, trackingId, seqNo, requestAck);
+            SynapseMessage message = SynapseMessage.GetSendPlanStatusMessage(body, targetGroup, trackingId, seqNo, requestAck);
 
             if (endpoint != null)
                 endpoint.SendMessage(message);

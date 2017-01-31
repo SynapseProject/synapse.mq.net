@@ -155,7 +155,7 @@ namespace Synapse.MQ.Tester
             {
                 Thread.Sleep(3000);
 
-                SynapseMessage status = SynapseMessage.GetSendStatusMessage(message.Body.Substring(0, (i + 1)).ToUpper(), message.TargetGroup, message.TrackingId, i + 1, true);
+                SynapseMessage status = SynapseMessage.GetSendPlanStatusMessage(message.Body.Substring(0, (i + 1)).ToUpper(), message.TargetGroup, message.TrackingId, i + 1, true);
 
                 if (endpoint != null)
                     endpoint.SendMessage(status);
