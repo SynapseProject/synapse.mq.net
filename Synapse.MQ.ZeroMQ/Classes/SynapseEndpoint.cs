@@ -150,17 +150,5 @@ namespace Synapse.MQ.ZeroMQ
                     replyUsing.SendMessage(reply);
             }
         }
-
-        public static SynapseMessage GetRegisterMessage(String groupId, String uniqueId, String queueName)
-        {
-            SynapseMessage message = new SynapseMessage();
-            message.Type = MessageType.ADMIN;
-            message.SenderId = uniqueId;
-            message.Target = queueName;
-            message.TargetGroup = groupId;
-            message.AckRequested = true;
-
-            return message;
-        }
     }
 }

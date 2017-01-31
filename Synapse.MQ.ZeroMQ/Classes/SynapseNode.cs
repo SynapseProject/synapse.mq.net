@@ -106,7 +106,7 @@ namespace Synapse.MQ.ZeroMQ
 
         public Guid SendStatus(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = true, ISynapseEndpoint endpoint = null)
         {
-            SynapseMessage message = GetSendStatusMessage(body, targetGroup, trackingId, seqNo, requestAck);
+            SynapseMessage message = SynapseMessage.GetSendStatusMessage(body, targetGroup, trackingId, seqNo, requestAck);
 
             if (endpoint != null)
                 endpoint.SendMessage(message);
@@ -116,29 +116,14 @@ namespace Synapse.MQ.ZeroMQ
             return message.Id;
         }
 
-        public static SynapseMessage GetSendStatusMessage(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = true)
-        {
-            SynapseMessage message = new SynapseMessage();
-
-            message.Type = MessageType.STATUS;
-            message.Target = MessageType.STATUS.ToString();
-            if (targetGroup != null) { message.TargetGroup = targetGroup; }
-            if (trackingId != null) { message.TrackingId = trackingId; }
-            message.SequenceNumber = seqNo;
-            message.Body = body;
-            message.AckRequested = requestAck;
-
-            return message;
-        }
-
         public void Register()
         {
-            SynapseMessage message = SynapseEndpoint.GetRegisterMessage(GroupId, Id, "REGISTER_NODE");
+            SynapseMessage message = SynapseMessage.GetRegisterMessage(GroupId, Id, "REGISTER_NODE");
             Outbound.SendMessage(message);
         }
         public void Unregister()
         {
-            SynapseMessage message = SynapseEndpoint.GetRegisterMessage(GroupId, Id, "UNREGISTER_NODE");
+            SynapseMessage message = SynapseMessage.GetRegisterMessage(GroupId, Id, "UNREGISTER_NODE");
             Outbound.SendMessage(message);
         }
 

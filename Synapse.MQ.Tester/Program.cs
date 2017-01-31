@@ -51,15 +51,11 @@ namespace Synapse.MQ.Tester
                         inputStr = Console.ReadLine().Trim();
 
                         i++;
-                        SynapseMessage message = new SynapseMessage();
-                        message.SequenceNumber = i;
-                        message.TrackingId = "CONTROLLER_" + ("" + i).PadLeft(8, '0');
-                        message.TargetGroup = controller.GroupId;
-                        message.SenderId = controller.Id;
+                        String trackingId = "CONTROLLER_" + ("" + i).PadLeft(8, '0');
 
                         if (inputStr.ToUpper().StartsWith("CANCEL"))
                         {
-                            controller.CancelPlan(inputStr.Substring(7), null, null, 0, false);
+                            controller.CancelPlan(inputStr.Substring(7), controller.GroupId, trackingId, i, false);
                         }
                         else if (inputStr.ToUpper().StartsWith("EXIT"))
                         {
@@ -76,7 +72,7 @@ namespace Synapse.MQ.Tester
                         }
                         else
                         {
-                            controller.ExecutePlan(inputStr);
+                            controller.ExecutePlan(inputStr, controller.GroupId, trackingId, i, true);
                         }
 
                     }
@@ -159,7 +155,7 @@ namespace Synapse.MQ.Tester
             {
                 Thread.Sleep(3000);
 
-                SynapseMessage status = SynapseNode.GetSendStatusMessage(message.Body.Substring(0, (i + 1)).ToUpper(), message.TargetGroup, message.TrackingId, i + 1, true);
+                SynapseMessage status = SynapseMessage.GetSendStatusMessage(message.Body.Substring(0, (i + 1)).ToUpper(), message.TargetGroup, message.TrackingId, i + 1, true);
 
                 if (endpoint != null)
                     endpoint.SendMessage(status);
