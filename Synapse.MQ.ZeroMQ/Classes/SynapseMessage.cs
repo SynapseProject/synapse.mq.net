@@ -42,6 +42,7 @@ namespace Synapse.MQ.ZeroMQ
         {
             Id = Guid.NewGuid();
             CreationDate = DateTime.Now;
+            TargetGroup = String.Empty;
         }
 
         public static SynapseMessage GetInstance(String xml)

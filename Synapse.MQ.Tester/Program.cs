@@ -59,11 +59,7 @@ namespace Synapse.MQ.Tester
 
                         if (inputStr.ToUpper().StartsWith("CANCEL"))
                         {
-                            message.Type = MessageType.CANCELPLAN;
-                            message.Target = "CANCELPLAN";
-                            message.Body = inputStr.Substring(7);
-                            message.AckRequested = false;
-                            controller.SendMessage(message);
+                            controller.CancelPlan(inputStr.Substring(7), null, null, 0, false);
                         }
                         else if (inputStr.ToUpper().StartsWith("EXIT"))
                         {
@@ -80,11 +76,7 @@ namespace Synapse.MQ.Tester
                         }
                         else
                         {
-                            message.Type = MessageType.EXECUTEPLAN;
-                            message.Target = "EXECUTEPLAN";
-                            message.Body = inputStr;
-                            message.AckRequested = true;
-                            controller.SendMessage(message);
+                            controller.ExecutePlan(inputStr);
                         }
 
                     }
@@ -166,15 +158,8 @@ namespace Synapse.MQ.Tester
             for (int i=0; i<message.Body.Length; i++)
             {
                 Thread.Sleep(3000);
-                SynapseMessage status = new SynapseMessage();
-                status.Type = MessageType.STATUS;
-                status.TrackingId = message.TrackingId;
-                status.TargetGroup = message.TargetGroup;
-                status.Target = "STATUS";
-                status.SenderId = "ProcessExecutePlanRequest-SendStatus";
-                status.SequenceNumber = i+1;
-                status.AckRequested = true;
-                status.Body = message.Body.Substring(0, (i+1)).ToUpper();
+
+                SynapseMessage status = SynapseNode.GetSendStatusMessage(message.Body.Substring(0, (i + 1)).ToUpper(), message.TargetGroup, message.TrackingId, i + 1, true);
 
                 if (endpoint != null)
                     endpoint.SendMessage(status);

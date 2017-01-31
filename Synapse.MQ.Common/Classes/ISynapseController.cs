@@ -16,6 +16,7 @@ namespace Synapse.MQ
         Func<ISynapseMessage, ISynapseEndpoint, ISynapseMessage> ProcessAcks { get; set; }
 
         // Outbound Actions
-        Guid SendMessage(ISynapseMessage message);
+        Guid ExecutePlan(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = true, ISynapseEndpoint endpoint = null);
+        Guid CancelPlan(String body, String targetGroup = null, String trackingId = null, int seqNo = 0, bool requestAck = false, ISynapseEndpoint endpoint = null);
     }
 }
